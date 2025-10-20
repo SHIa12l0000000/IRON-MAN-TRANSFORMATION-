@@ -3,79 +3,213 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Iron Man Transformation Effect</title>
+<title>Avengers‑Level Iron Man Transformation (Pure HTML/CSS/JS)</title>
 <style>
-  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;}
-  body.transforming{animation:bgChange 3s forwards;}
+  :root{--w:360px;--h:720px}
+  html,body{height:100%;margin:0;background:#000;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial}
+  .panel{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;position:relative;background:linear-gradient(180deg,#050508,#0b0910);box-shadow:0 30px 80px rgba(0,0,0,.8), 0 8px 30px rgba(255,0,40,.04) inset}
 
-  @keyframes bgChange{
-    0%{background:#000;}
-    50%{background:radial-gradient(circle,#ff0000 0%,#000 80%);}
-    100%{background:radial-gradient(circle,#111 0%,#000 80%);}
-  }
+  /* background dynamic gradient layers */
+  .bgLayer{position:absolute;inset:0;pointer-events:none;}
+  .bgLayer.canvas{mix-blend-mode:screen}
 
-  .container{position:relative;width:350px;height:600px;overflow:hidden;border-radius:20px;box-shadow:0 0 40px rgba(255,0,0,.4);}
-  .player,.ironman{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:opacity 1s ease,transform 1s ease;}
-  .player img,.ironman img{width:75%;height:auto;transition:transform 1s ease;}
-  .ironman{opacity:0;transform:scale(0.5);}
+  /* human layer (user image) */
+  .human{position:absolute;left:50%;top:52%;transform:translate(-50%,-52%);z-index:30;filter:drop-shadow(0 30px 40px rgba(0,0,0,.65));}
+  .human img{display:block;max-width:66%;height:auto;transition:transform .9s cubic-bezier(.2,.9,.3,1),filter .9s}
 
-  .arc{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px;opacity:0;border-radius:50%;box-shadow:0 0 60px 30px rgba(0,180,255,.5),inset 0 0 40px rgba(0,180,255,.8);transform:scale(0.2);transition:all 1s ease;}
+  /* suit layer (ironman PNG) sits above and uses multiply/screen blending for metal look */
+  .suit{position:absolute;left:50%;top:52%;transform:translate(-50%,-52%);z-index:70;pointer-events:none}
+  .suit img{display:block;max-width:66%;height:auto;opacity:0;transform:scale(.85);transition:opacity .9s ease, transform 1s cubic-bezier(.2,.9,.3,1);filter:drop-shadow(0 28px 48px rgba(0,0,0,.7))}
 
-  .flash{position:absolute;inset:0;background:radial-gradient(circle,#fff 0%,transparent 70%);opacity:0;transition:opacity .3s;}
+  /* nano-particles canvas (behind suit for assembly) */
+  canvas{position:absolute;inset:0;z-index:40;}
 
-  .energy{position:absolute;inset:0;pointer-events:none;}
-  .energy span{position:absolute;width:6px;height:6px;background:#0ff;border-radius:50%;opacity:0;animation:particle 1.2s linear infinite;}
-  @keyframes particle{
-    0%{transform:translate(0,0) scale(0);opacity:1;}
-    50%{transform:translate(100px,-100px) scale(1);opacity:.6;}
-    100%{transform:translate(200px,-200px) scale(0);opacity:0;}
-  }
+  /* hologram grid */
+  .holo{position:absolute;left:0;right:0;bottom:0;height:34%;z-index:45;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6));mix-blend-mode:screen}
 
-  .btn{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:red;color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:18px;font-weight:bold;cursor:pointer;}
+  /* arc reactor glow */
+  .arc{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);z-index:80;border-radius:50%;width:48px;height:48px;box-shadow:0 0 18px 8px rgba(0,160,255,.18),0 0 120px 36px rgba(0,120,255,.06);opacity:0;transition:opacity .6s,transform .9s}
+  .arc .core{width:14px;height:14px;background:radial-gradient(circle,#fff,#8ff);border-radius:50%;margin:17px}
 
+  /* armor shards (DOM elements) */
+  .shards{position:absolute;inset:0;z-index:60;pointer-events:none}
+  .shard{position:absolute;width:12px;height:26px;border-radius:4px;background:linear-gradient(90deg,#ffd08a,#ff3d3d);box-shadow:0 6px 18px rgba(255,60,60,.12);opacity:0;transform-origin:center;filter:blur(.2px)}
+
+  /* beams */
+  .beam{position:absolute;left:50%;top:0;width:2px;height:100%;transform:translateX(-50%);pointer-events:none;mix-blend-mode:screen;z-index:20}
+
+  /* UI */
+  .ui{position:absolute;left:10px;right:10px;bottom:12px;z-index:200;display:flex;justify-content:center;gap:8px}
+  button{background:linear-gradient(180deg,#ff4d4d,#c12b2b);border:none;padding:12px 18px;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(197,40,40,.22)}
+  .small{background:transparent;border:1px solid rgba(255,255,255,.06);font-weight:700}
+
+  /* final post-transform subtle glow on suit */
+  .panel.transformed .suit img{opacity:1;transform:scale(1)}
+  .panel.transformed .human img{filter:brightness(.06) saturate(.3) blur(0px);transform:scale(1.02)}
+  .panel.transformed .arc{opacity:1;transform:scale(1.08)}
+
+  /* cinematic vignette */
+  .vignette{position:absolute;inset:0;z-index:300;pointer-events:none;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.62) 100%)}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="player" id="player"><img src="player.png" alt="player"></div>
-  <div class="ironman" id="ironman"><img src="ironman.png" alt="ironman"></div>
-  <div class="arc" id="arc"></div>
-  <div class="flash" id="flash"></div>
-  <div class="energy" id="energy"></div>
-  <button class="btn" id="transformBtn">Transform</button>
-</div>
+  <div class="panel" id="panel">
+    <canvas id="bgCanvas" class="bgLayer canvas"></canvas>
+    <canvas id="nanoCanvas"></canvas>
+
+    <div class="human" id="human"><img id="humanImg" src="player.png" alt="player"></div>
+    <div class="suit" id="suit"><img id="suitImg" src="ironman.png" alt="suit"></div>
+
+    <div class="shards" id="shards"></div>
+
+    <div class="arc" id="arc"><div class="core"></div></div>
+
+    <div class="holo" id="holo"></div>
+    <div class="vignette"></div>
+
+    <div class="ui">
+      <button id="transformBtn">Transform</button>
+      <button id="resetBtn" class="small">Reset</button>
+    </div>
+  </div>
 
 <script>
-const btn=document.getElementById('transformBtn');
-const player=document.getElementById('player');
-const ironman=document.getElementById('ironman');
-const arc=document.getElementById('arc');
-const flash=document.getElementById('flash');
-const energy=document.getElementById('energy');
+/*
+ Advanced pure JS Iron‑Man style transformation
+ - No external libraries
+ - Replace player.png and ironman.png with your images
+ - Best results: player PNG with transparent background and ironman PNG aligned similarly
+*/
 
-for(let i=0;i<25;i++){
-  const p=document.createElement('span');
-  p.style.left=Math.random()*300+'px';
-  p.style.top=Math.random()*600+'px';
-  p.style.animationDelay=Math.random()*1+'s';
-  energy.appendChild(p);
+const panel = document.getElementById('panel');
+const humanImg = document.getElementById('humanImg');
+const suitImg = document.getElementById('suitImg');
+const shardsRoot = document.getElementById('shards');
+const nanoCanvas = document.getElementById('nanoCanvas');
+const bgCanvas = document.getElementById('bgCanvas');
+const arc = document.getElementById('arc');
+const transformBtn = document.getElementById('transformBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+// size canvases
+function resize(){
+  const r = panel.getBoundingClientRect();
+  [nanoCanvas,bgCanvas].forEach(c=>{c.width = r.width; c.height = r.height});
+}
+new ResizeObserver(resize).observe(panel); resize();
+
+// ---------- background animated gradient (for cinematic color-change) ----------
+const bgCtx = bgCanvas.getContext('2d');
+let bgTick = 0;
+function drawBackground(){
+  const w = bgCanvas.width, h = bgCanvas.height; bgCtx.clearRect(0,0,w,h);
+  // layered radial gradients that animate
+  const cx = w*0.5 + Math.sin(bgTick*0.012)*w*0.08;
+  const cy = h*0.45 + Math.cos(bgTick*0.01)*h*0.06;
+  const g = bgCtx.createRadialGradient(cx,cy,Math.max(40,w*0.02),cx,cy,Math.max(w,h));
+  // dynamic colors during transform flag
+  const t = panel.classList.contains('transforming') ? Math.min(1, (Date.now()-panel._t0)/1200) : 0;
+  const r = Math.floor(80 + 120*t), gcol = Math.floor(20 + 160*t), bcol = Math.floor(20 + 200*t);
+  g.addColorStop(0, `rgba(${r},${gcol},${bcol},${0.85})`);
+  g.addColorStop(0.4, `rgba(${r*0.06|0},${gcol*0.06|0},${bcol*0.06|0},${0.35})`);
+  g.addColorStop(1, 'rgba(0,0,0,1)');
+  bgCtx.fillStyle = g; bgCtx.fillRect(0,0,w,h);
+  bgTick++;
 }
 
-btn.addEventListener('click',()=>{
-  document.body.classList.add('transforming');
-  arc.style.opacity='1';
-  arc.style.transform='scale(1.2)';
-  setTimeout(()=>{
-    flash.style.opacity='1';
-    player.style.opacity='0';
-    ironman.style.opacity='1';
-    ironman.style.transform='scale(1)';
-  },1200);
-  setTimeout(()=>{
-    flash.style.opacity='0';
-    arc.style.opacity='0';
-  },2500);
+// ---------- nano-particles (tiny robots) assembly canvas ----------
+const nCtx = nanoCanvas.getContext('2d');
+let nanoParticles = [];
+function Nano(x,y, vx, vy, size, life, hue){ this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.size=size;this.life=life;this.hue=hue }
+function spawnNano(x,y,count){ for(let i=0;i<count;i++){ const a = Math.random()*Math.PI*2; const s = Math.random()*1.6+0.6; const sp = Math.random()*6+1; nanoParticles.push(new Nano(x + (Math.random()-0.5)*20, y + (Math.random()-0.5)*20, Math.cos(a)*sp, Math.sin(a)*sp, s, 80+Math.random()*60, 200+Math.random()*80)); } }
+
+function drawNano(){ const w=nanoCanvas.width, h=nanoCanvas.height; nCtx.clearRect(0,0,w,h); nCtx.globalCompositeOperation='lighter';
+  for(let i=nanoParticles.length-1;i>=0;i--){ const p = nanoParticles[i]; p.x += p.vx*0.14; p.y += p.vy*0.14; p.vx *= 0.98; p.vy *= 0.98; p.life--; const alpha = Math.max(p.life/140,0);
+    nCtx.beginPath(); nCtx.fillStyle = `hsla(${p.hue},90%,60%,${alpha})`; nCtx.arc(p.x,p.y,p.size,0,Math.PI*2); nCtx.fill();
+    // tiny metallic glints
+    nCtx.fillStyle = `rgba(255,255,255,${alpha*0.9})`; nCtx.fillRect(p.x-0.7,p.y-0.7,1.4,1.4);
+    if(p.life<=0) nanoParticles.splice(i,1);
+  }
+}
+
+// ---------- shards DOM assembly (for visible plating pieces) ----------
+function makeShards(count){ shardsRoot.innerHTML=''; const R = panel.getBoundingClientRect(); for(let i=0;i<count;i++){ const d=document.createElement('div'); d.className='shard'; const left = 40 + Math.random()*28; const top = 20 + Math.random()*48; d.style.left = left + '%'; d.style.top = top + '%'; d.style.width = (8 + Math.random()*14) + 'px'; d.style.height = (18 + Math.random()*36) + 'px'; d.style.transform = `translate(-50%,-50%) rotate(${Math.random()*360}deg) scale(${0.6+Math.random()*0.8})`; d.dataset.tx = (Math.random()*12-6) + '%'; d.dataset.ty = (Math.random()*6-3) + '%'; shardsRoot.appendChild(d);} }
+makeShards(28);
+
+function assembleShards(){ const shards = document.querySelectorAll('.shard'); shards.forEach((el,i)=>{
+  el.style.opacity = 0; el.style.transition = `transform ${700+Math.random()*700}ms cubic-bezier(.2,.9,.3,1), opacity ${200+Math.random()*500}ms ease`;
+  setTimeout(()=>{ el.style.opacity = 1; el.style.transform = `translate(-50%,-50%) translate(${el.dataset.tx}, ${el.dataset.ty}) rotate(${Math.random()*20-10}deg) scale(1)`; }, i*45);
+  setTimeout(()=>{ el.style.opacity = 0.02; el.style.transform = `translate(-50%,-50%) translate(0,0) rotate(0deg) scale(0.86)`; }, 1400 + i*18);
+}); }
+
+// ---------- audio (synthesized metallic / hum sounds) ----------
+let audioCtx;
+function playAudioSequence(){ try{ audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); const now = audioCtx.currentTime + 0.02;
+  // low hum
+  const hum = audioCtx.createOscillator(); const humG = audioCtx.createGain(); hum.type='sine'; hum.frequency.value = 60; humG.gain.value = 0.06; hum.connect(humG); humG.connect(audioCtx.destination); hum.start(now); humG.gain.exponentialRampToValueAtTime(0.0001, now + 2.5); hum.stop(now+2.6);
+  // metallic clicks
+  const clicks = [1200,900,700,1400,1600]; clicks.forEach((f,i)=>{ const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='square'; o.frequency.value = f; g.gain.value = 0.06; o.connect(g); g.connect(audioCtx.destination); o.start(now + 0.12 + i*0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12 + i*0.06 + 0.12); o.stop(now + 0.12 + i*0.06 + 0.14); });
+  // final bright sweep
+  const sweep = audioCtx.createOscillator(); const sg = audioCtx.createGain(); sweep.type='sawtooth'; sweep.frequency.setValueAtTime(300, now+0.9); sweep.frequency.exponentialRampToValueAtTime(1200, now+1.6); sg.gain.value = 0.08; sweep.connect(sg); sg.connect(audioCtx.destination); sweep.start(now+0.9); sg.gain.exponentialRampToValueAtTime(0.0001, now+2.2); sweep.stop(now+2.25);
+ }catch(e){console.warn('audio blocked',e);} }
+
+// ---------- main loop ----------
+let raf;
+function loop(){ drawBackground(); drawNano(); raf = requestAnimationFrame(loop); }
+loop();
+
+// ---------- transformation choreography ----------
+transformBtn.addEventListener('click', ()=>{
+  if(panel.classList.contains('transforming')) return; panel.classList.add('transforming'); panel._t0 = Date.now();
+  // dim human, start nanobot rains
+  const rect = panel.getBoundingClientRect(); const cx = rect.width*0.5; const cy = rect.height*0.46;
+
+  // spawn continuous nanos from edges into center
+  for(let r=0;r<10;r++) setTimeout(()=> spawnNano(Math.random()*rect.width, -10 + Math.random()*20, 10 + Math.floor(Math.random()*8)), r*60);
+  for(let r=0;r<8;r++) setTimeout(()=> spawnNano(rect.width + 10, Math.random()*rect.height, 8 + Math.floor(Math.random()*6)), r*80);
+  setTimeout(()=> spawnNano(cx, cy, 140), 650);
+
+  // shards assembly and small pulses
+  setTimeout(()=> assembleShards(), 420);
+  setTimeout(()=> assembleShards(), 740);
+
+  // reveal suit in steps
+  setTimeout(()=>{ suitImg.style.opacity = 0.6; suitImg.style.transform = 'scale(.92)'; }, 900);
+  setTimeout(()=>{ suitImg.style.opacity = 1; suitImg.style.transform = 'scale(1)'; panel.classList.add('transformed'); }, 1350);
+
+  // arc reactor bright
+  setTimeout(()=>{ arc.style.opacity = 1; arc.style.transform = 'scale(1.12)'; }, 1200);
+
+  // big nano burst and audio
+  setTimeout(()=>{ spawnNano(cx, cy, 220); playAudioSequence(); }, 1150);
+
+  // a few beam-like vertical flares from top
+  createBeams();
+
+  // end transforming flag after full show
+  setTimeout(()=>{ panel.classList.remove('transforming'); }, 3600);
 });
+
+resetBtn.addEventListener('click', ()=>{
+  cancelAnimationFrame(raf); nanoParticles=[]; panel.classList.remove('transformed','transforming'); suitImg.style.opacity=0; suitImg.style.transform='scale(.85)'; arc.style.opacity=0; shardsRoot.innerHTML=''; makeShards(28); loop();
+});
+
+// ---------- beams (DOM) ----------
+function createBeams(){ const count = 6; for(let i=0;i<count;i++){ const b = document.createElement('div'); b.className='beam'; b.style.width = `${2 + Math.random()*3}px`; b.style.left = `${45 + i*(6 + Math.random()*2)}%`; b.style.top = `${-20 - Math.random()*30}px`; b.style.opacity = 0; b.style.boxShadow = `0 0 ${30+Math.random()*80}px ${10+Math.random()*30}px rgba(100,200,255,0.12)`; panel.appendChild(b);
+    // animate beam
+    setTimeout(()=>{ b.style.transition = 'opacity .25s, top .9s cubic-bezier(.2,.9,.3,1)'; b.style.opacity = .85; b.style.top = `${-2 + Math.random()*8}%`; }, 100 + i*80);
+    setTimeout(()=>{ b.style.transition = 'opacity .6s linear'; b.style.opacity = 0; b.remove(); }, 1400 + i*60);
+  }
+}
+
+// attempt to auto-fit suit size to human image when both loaded
+function fitSuit(){ if(!humanImg.complete || !suitImg.complete) return setTimeout(fitSuit,200);
+  const hr = humanImg.getBoundingClientRect(); const sr = suitImg.getBoundingClientRect();
+  // scale suit width to human width
+  suitImg.style.width = hr.width + 'px';
+}
+humanImg.addEventListener('load', fitSuit); suitImg.addEventListener('load', fitSuit); setTimeout(fitSuit,500);
+
 </script>
 </body>
 </html>
