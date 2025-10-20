@@ -3,42 +3,33 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Ra.One / Ironman Nanotech Transform</title>
+<title>Nanotech Transform — High Detail + Chest Align</title>
 <style>
-  :root{
-    --stage-w:360px; /* change to full-screen by setting to 100vw / 100vh via CSS below */
-    --stage-h:720px;
-  }
+  :root{ --stage-w:360px; --stage-h:720px; }
   html,body{height:100%;margin:0;background:#050407;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial;color:#dfeeff}
-  .stage{
-    width:var(--stage-w); height:var(--stage-h);
-    border-radius:14px; overflow:hidden; position:relative; background:radial-gradient(1200px 600px at 50% 30%, rgba(4,30,60,0.45), #000 40%);
-    box-shadow: 0 30px 80px rgba(0,0,0,.7); perspective:1200px;
+  .stage{width:var(--stage-w); height:var(--stage-h); border-radius:14px; overflow:hidden; position:relative;
+    background:radial-gradient(1200px 600px at 50% 30%, rgba(4,30,60,0.45), #000 40%);
+    box-shadow:0 30px 80px rgba(0,0,0,.7); perspective:1200px;
   }
   .scene{position:absolute;inset:0;transform-style:preserve-3d;overflow:hidden}
-  /* Player preview */
   .player-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none}
-  img#playerImg{max-width:62%;height:auto;display:block;filter:drop-shadow(0 22px 40px rgba(0,0,0,.8))}
-  /* cubes world layer */
+  #playerImg{max-width:62%;height:auto;display:block;filter:drop-shadow(0 22px 40px rgba(0,0,0,.8));cursor:crosshair}
   .world{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;z-index:6}
-  .cube{
-    position:absolute;width:6px;height:6px;transform-style:preserve-3d;border-radius:1px;will-change:transform,opacity;
-    box-shadow:0 0 6px rgba(0,0,0,0.6) inset;
-    opacity:0;
-  }
-  /* sparks */
+  .cube{position:absolute;width:6px;height:6px;transform-style:preserve-3d;border-radius:1px;will-change:transform,opacity;box-shadow:0 0 6px rgba(0,0,0,0.6) inset;opacity:0;}
   canvas.sparks{position:absolute;inset:0;z-index:9;pointer-events:none}
-  /* arc reactor */
-  .reactor{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:999px;z-index:11;pointer-events:none;mix-blend-mode:screen;opacity:0}
+  .reactor{position:absolute;width:28px;height:28px;border-radius:999px;z-index:11;pointer-events:none;mix-blend-mode:screen;opacity:0;transform:translate(-50%,-50%)}
   .reactor::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 30px 12px rgba(0,170,255,0.14),0 0 80px 26px rgba(0,180,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(180,240,255,1) 0%, rgba(0,120,255,0.8) 30%, rgba(0,60,120,0.18) 70%);}
   .flash{position:absolute;left:0;right:0;top:0;height:100%;z-index:12;pointer-events:none;mix-blend-mode:screen;opacity:0}
-  /* UI */
   .ui{position:absolute;left:12px;right:12px;bottom:14px;display:flex;justify-content:center;gap:8px;z-index:999}
   .btn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
   .btn.primary{background:linear-gradient(180deg,#ff6b26,#dd2b00);color:#fff}
   .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.06);color:#cfe}
   .status{position:absolute;left:0;right:0;top:10px;text-align:center;color:#7fe;z-index:999;font-weight:700}
-  /* camera shake helper */
+  .controls{position:absolute;left:12px;top:46px;z-index:1000;display:flex;gap:6px;align-items:center}
+  .file-input{background:rgba(255,255,255,0.03);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);color:#9fe;font-size:12px;cursor:pointer}
+  .toggle{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);color:#9fe;font-size:12px}
+  .marker{position:absolute;width:18px;height:18px;border-radius:50%;z-index:998;pointer-events:none;transform:translate(-50%,-50%);opacity:0}
+  .marker::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 14px 6px rgba(0,200,255,0.12),0 0 40px 14px rgba(0,150,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(180,240,255,1) 0%, rgba(0,120,255,0.6) 30%);}
   .shake{animation:shakevar 400ms linear 1}
   @keyframes shakevar{
     0%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
@@ -47,30 +38,38 @@
     75%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.3deg) rotateY(-0.6deg)}
     100%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
   }
-  /* small responsive tweak */
   @media (min-width:900px){:root{--stage-w:420px;--stage-h:820px}}
 </style>
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="status" id="status">Place <strong>player.png</strong> and <strong>ironman.png</strong> beside this HTML and click <strong>Transform</strong></div>
+    <div class="status" id="status">Choose images or let default filenames load, click player to set chest, then Transform.</div>
 
     <div class="scene" id="scene">
       <div class="player-wrap" id="playerWrap">
-        <img id="playerImg" src="player.png" alt="player (player.png)">
+        <img id="playerImg" src="" alt="player">
       </div>
 
       <div class="world" id="world"></div>
 
       <canvas id="sparks" class="sparks"></canvas>
 
-      <div class="reactor" id="reactor"></div>
+      <div class="reactor" id="reactor" aria-hidden="true"></div>
       <div class="flash" id="flash"></div>
 
-      <!-- hidden samplers (canvas) -->
       <canvas id="suitSampler" style="display:none"></canvas>
-      <canvas id="playerSampler" style="display:none"></canvas>
-      <img id="suitImg" src="ironman.png" style="display:none" crossorigin="anonymous">
+      <img id="suitImg" src="" style="display:none">
+      <div class="marker" id="marker"></div>
+    </div>
+
+    <div class="controls">
+      <label class="file-input">Player
+        <input id="playerFile" type="file" accept="image/*" style="display:none">
+      </label>
+      <label class="file-input">Suit
+        <input id="suitFile" type="file" accept="image/*" style="display:none">
+      </label>
+      <div class="toggle" id="detailToggle" title="Click to toggle detail mode">Detail: Normal</div>
     </div>
 
     <div class="ui">
@@ -80,24 +79,29 @@
   </div>
 
 <script>
-/* Cinematic nanotech cube assembly
-   - Samples ironman.png into small sources
-   - Places cubes in 3D space and animates them toward target positions overlaying the player
-   - Adds sparks, flash, reactor glow, camera shake and audio cues (synth)
-   - Configurable fidelity & performance settings below
+/* Full upgrade:
+ - Detail toggle Normal/High (normal step=8, high step=4)
+ - Click player preview to set chest coordinate
+ - Cubes spiral in toward chest point
+ - Auto-capping to safe cube counts
+ - Tries default filenames if you don't choose files
 */
 
-const CONFIG = {
-  CUBE_SIZE: 6,          // size of cube in px
-  SAMPLE_STEP: 8,        // pixel sampling step from suit image. Lower -> more cubes
-  START_RADIUS: 600,     // radius around scene cubes fly from
-  ASSEMBLE_MS: 2200,     // duration of assembly lerp (ms)
-  STAGGER_FACTOR: 0.9,   // delay spread for cubes
-  MAX_CUBES: 1400,       // safety cap
-  SPARK_COUNT: 70,       // number of spark particles
-  CAMERA_SHAKE_MS: 420,  // camera shake duration
+const CONFIG_BASE = {
+  CUBE_SIZE: 6,
+  SAMPLE_STEP_NORMAL: 8,
+  SAMPLE_STEP_HIGH: 4,
+  START_RADIUS: 600,
+  ASSEMBLE_MS: 2200,
+  STAGGER_FACTOR: 0.9,
+  MAX_CUBES_NORMAL: 1400,
+  MAX_CUBES_HIGH: 2500,
+  SPARK_COUNT: 70,
+  CAMERA_SHAKE_MS: 420,
   REACTOR_SCALE_MS: 1200,
 };
+
+let CONFIG = Object.assign({}, CONFIG_BASE);
 
 const stage = document.getElementById('stage');
 const world = document.getElementById('world');
@@ -108,17 +112,27 @@ const playerImg = document.getElementById('playerImg');
 const playerWrap = document.getElementById('playerWrap');
 const suitImg = document.getElementById('suitImg');
 const suitSampler = document.getElementById('suitSampler');
-const playerSampler = document.getElementById('playerSampler');
 const sparksCanvas = document.getElementById('sparks');
 const reactor = document.getElementById('reactor');
 const flash = document.getElementById('flash');
+const playerFile = document.getElementById('playerFile');
+const suitFile = document.getElementById('suitFile');
+const detailToggle = document.getElementById('detailToggle');
+const marker = document.getElementById('marker');
 
 let cubes = [];
 let assembling = false;
 let cubeCount = 0;
 let sparkCtx;
+let lastPlayerRect = null;
+let chestPoint = null; // {x: stageX, y: stageY} in stage coordinates
+let detailHigh = false;
 
-// ensure canvas size matches stage
+// auto default filenames (as you requested)
+const DEFAULT_PLAYER = '1000139367.png';
+const DEFAULT_SUIT = '1000139366.png';
+
+// size canvas to stage
 function resize() {
   sparksCanvas.width = stage.clientWidth;
   sparksCanvas.height = stage.clientHeight;
@@ -126,24 +140,80 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-/* Utilities */
 function rnd(min, max){return Math.random()*(max-min)+min;}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
-/* load suit image, sample pixels, create cube data structure */
+/* File selectors - read as dataURL */
+playerFile.addEventListener('change', (ev)=>{
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const rdr = new FileReader();
+  rdr.onload = (e)=> { playerImg.src = e.target.result; status.innerText = 'Player loaded.'; };
+  rdr.readAsDataURL(f);
+});
+suitFile.addEventListener('change', (ev)=>{
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const rdr = new FileReader();
+  rdr.onload = (e)=> { suitImg.src = e.target.result; status.innerText = 'Suit loaded.'; };
+  rdr.readAsDataURL(f);
+});
+document.querySelectorAll('.file-input').forEach((el)=>{
+  el.addEventListener('click', (evt)=>{
+    const input = el.querySelector('input');
+    input.click();
+    evt.preventDefault();
+  });
+});
+
+/* Toggle detail mode */
+detailToggle.addEventListener('click', ()=>{
+  detailHigh = !detailHigh;
+  detailToggle.textContent = `Detail: ${detailHigh ? 'High' : 'Normal'}`;
+  status.innerText = `Detail set to ${detailHigh ? 'High' : 'Normal'}.`;
+});
+
+/* Allow clicking player image to choose chest point */
+playerImg.addEventListener('click', (ev)=>{
+  const prect = playerImg.getBoundingClientRect();
+  if(prect.width === 0 || prect.height === 0) return;
+  const stageRect = stage.getBoundingClientRect();
+  const clickX = ev.clientX - stageRect.left;
+  const clickY = ev.clientY - stageRect.top;
+  chestPoint = { x: clickX, y: clickY };
+  // place marker
+  marker.style.left = `${clickX}px`;
+  marker.style.top = `${clickY}px`;
+  marker.style.opacity = 1;
+  marker.style.transition = 'opacity 300ms ease, transform 260ms ease';
+  marker.style.transform = 'translate(-50%,-50%) scale(1.25)';
+  setTimeout(()=>{ marker.style.transform='translate(-50%,-50%) scale(1)'; }, 140);
+  setTimeout(()=>{ marker.style.opacity = 0.9; }, 260);
+  status.innerText = 'Reactor target locked on chest.';
+});
+
+/* attempt to load default filenames if present (useful if serving alongside assets) */
+function tryLoadDefaults(){
+  // set src attributes — browser will attempt to load them; if not found, onerror will handle
+  playerImg.src = DEFAULT_PLAYER;
+  suitImg.src = DEFAULT_SUIT;
+  status.innerText = 'Attempting to load default images (or choose via controls).';
+}
+tryLoadDefaults();
+
+/* create cubes from suit image by sampling */
 function createCubesFromSuit(cb){
-  // ensure suit image loaded
-  if(!suitImg.complete){
+  if(!suitImg.complete || suitImg.naturalWidth === 0){
     suitImg.onload = ()=> createCubesFromSuit(cb);
-    suitImg.onerror = ()=> {
-      status.innerText = "Couldn't load ironman.png — make sure file exists next to HTML (same folder).";
-    };
+    suitImg.onerror = ()=> { status.innerText = "Couldn't load suit image — choose a different file or ensure the default file exists."; };
     return;
   }
-  // sample into canvas
+  resize();
   const sW = suitImg.naturalWidth;
   const sH = suitImg.naturalHeight;
-  const step = CONFIG.SAMPLE_STEP;
+  const step = detailHigh ? CONFIG_BASE.SAMPLE_STEP_HIGH : CONFIG_BASE.SAMPLE_STEP_NORMAL;
+  const maxCap = detailHigh ? CONFIG_BASE.MAX_CUBES_HIGH : CONFIG_BASE.MAX_CUBES_NORMAL;
+
   suitSampler.width = sW; suitSampler.height = sH;
   const sCtx = suitSampler.getContext('2d');
   sCtx.clearRect(0,0,sW,sH);
@@ -155,16 +225,15 @@ function createCubesFromSuit(cb){
     for(let x=0;x<sW;x+=step){
       const idx = (y*sW + x)*4;
       const a = imgData[idx+3];
-      if(a > 30){ // visible pixel
+      if(a > 30){
         const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
         positions.push({x, y, color:`rgb(${r},${g},${b})`});
       }
     }
   }
-  // cap positions
-  if(positions.length > CONFIG.MAX_CUBES){
-    // sample uniformly to cap
-    const stride = Math.ceil(positions.length / CONFIG.MAX_CUBES);
+  // cap positions smartly if too many
+  if(positions.length > maxCap){
+    const stride = Math.ceil(positions.length / maxCap);
     const filtered = [];
     for(let i=0;i<positions.length;i+=stride) filtered.push(positions[i]);
     positions.length=0; positions.push(...filtered);
@@ -172,32 +241,32 @@ function createCubesFromSuit(cb){
   cb(positions);
 }
 
-/* map suit pixel positions into stage coordinates relative to player's bounding box */
+/* Map suit pixels to player's bounding box */
 function mapToPlayer(positions){
-  // sample player bounding box and center positions
   const playerRect = playerImg.getBoundingClientRect();
   const stageRect = stage.getBoundingClientRect();
-
-  // We'll map suit image coordinates to player's width/height region. Use suit image natural dims
+  if(playerRect.width === 0 || playerRect.height === 0){
+    status.innerText = "Player image not visible yet — wait or reload.";
+    return [];
+  }
+  lastPlayerRect = playerRect;
   const suitW = suitImg.naturalWidth, suitH = suitImg.naturalHeight;
-  const mapScaleX = playerRect.width / suitW;
-  const mapScaleY = playerRect.height / suitH;
-  const offsetX = playerRect.left - stageRect.left + playerRect.width*0.0; // you can tweak centering
-  const offsetY = playerRect.top - stageRect.top + playerRect.height*0.0;
+  const scaleX = playerRect.width / suitW;
+  const scaleY = playerRect.height / suitH;
+  const offsetX = playerRect.left - stageRect.left;
+  const offsetY = playerRect.top - stageRect.top;
 
   return positions.map(p=>{
-    const tx = Math.round(p.x * mapScaleX + offsetX);
-    const ty = Math.round(p.y * mapScaleY + offsetY);
+    const tx = Math.round(p.x * scaleX + offsetX);
+    const ty = Math.round(p.y * scaleY + offsetY);
     return {tx, ty, color:p.color};
   });
 }
 
-/* build DOM cubes elements at random start positions and store target positions */
+/* build cubes DOM */
 function buildCubes(mapped){
-  // cleanup old cubes
   world.innerHTML = '';
   cubes = [];
-
   const W = stage.clientWidth, H = stage.clientHeight;
   const centerX = W/2, centerY = H/2;
   mapped.forEach((m,i)=>{
@@ -207,23 +276,28 @@ function buildCubes(mapped){
     el.style.height = CONFIG.CUBE_SIZE + 'px';
     el.style.background = m.color;
     el.style.opacity = '0';
-    // random start in 3d space
+    // start location random spherical
     const theta = rnd(0, Math.PI*2);
     const phi = rnd(0, Math.PI);
     const r = rnd(120, CONFIG.START_RADIUS);
     const sx = centerX + r*Math.cos(theta)*Math.sin(phi);
     const sy = centerY + r*Math.sin(theta)*Math.sin(phi);
     const sz = rnd(-900, 900);
-
-    // initial transform
     el.style.transform = `translate3d(${sx}px, ${sy}px, ${sz}px) scale(.8) rotateX(${rnd(-90,90)}deg) rotateY(${rnd(-90,90)}deg)`;
     world.appendChild(el);
 
+    // if no chestPoint selected, default to player center
+    const targetX = chestPoint ? chestPoint.x : (m.tx + (CONFIG.CUBE_SIZE/2));
+    const targetY = chestPoint ? chestPoint.y : (m.ty + (CONFIG.CUBE_SIZE/2));
+    // We'll store two targets: primary (chest) for spiral center and per-cube final mapped pos
     cubes.push({
       el, sx, sy, sz,
-      tx: m.tx + (CONFIG.CUBE_SIZE/2), // center offset
+      tx: m.tx + (CONFIG.CUBE_SIZE/2),
       ty: m.ty + (CONFIG.CUBE_SIZE/2),
       tz: 0,
+      chestX: targetX,
+      chestY: targetY,
+      index: i,
       delay: (i / mapped.length) * CONFIG.ASSEMBLE_MS * CONFIG.STAGGER_FACTOR * Math.random()
     });
   });
@@ -231,12 +305,27 @@ function buildCubes(mapped){
   status.innerText = `Cubes ready: ${cubeCount}. Click TRANSFORM.`;
 }
 
-/* animate cubes: lerp from start -> target using requestAnimationFrame */
+/* animate with spiral toward chest */
 function animateAssemble(){
   if(assembling) return;
   assembling = true;
   const startTime = performance.now();
-  // audio + visual start
+
+  // position reactor at chest (or center)
+  const stageRect = stage.getBoundingClientRect();
+  if(chestPoint){
+    reactor.style.left = `${chestPoint.x}px`;
+    reactor.style.top = `${chestPoint.y}px`;
+  } else if(lastPlayerRect){
+    const cx = lastPlayerRect.left - stageRect.left + lastPlayerRect.width/2;
+    const cy = lastPlayerRect.top - stageRect.top + lastPlayerRect.height/2;
+    reactor.style.left = `${cx}px`; reactor.style.top = `${cy}px`;
+  } else {
+    reactor.style.left = `${stage.clientWidth/2}px`;
+    reactor.style.top = `${stage.clientHeight/2}px`;
+  }
+
+  // visuals/audio
   playSynth();
   reactor.style.transition = `opacity ${CONFIG.REACTOR_SCALE_MS}ms ease-out, transform ${CONFIG.REACTOR_SCALE_MS}ms cubic-bezier(.2,.9,.2,1)`;
   reactor.style.opacity = 1;
@@ -246,10 +335,7 @@ function animateAssemble(){
   flash.style.opacity = 0.08;
   setTimeout(()=>flash.style.opacity = 0, 160);
 
-  // start sparks animation
   startSparks();
-
-  // camera shake
   playerWrap.classList.add('shake');
   setTimeout(()=>playerWrap.classList.remove('shake'), CONFIG.CAMERA_SHAKE_MS);
 
@@ -258,35 +344,57 @@ function animateAssemble(){
     let allAtTarget = true;
     for(const c of cubes){
       const tLocal = clamp((tGlobal - c.delay)/CONFIG.ASSEMBLE_MS, 0, 1);
-      // smooth ease (easeOutCubic)
-      const ease = 1 - Math.pow(1 - tLocal, 3);
-      // Interpolate positions in 3D: we animate z from start to small negative so the shape is slightly 3d
-      const curX = c.sx + (c.tx - c.sx) * ease;
-      const curY = c.sy + (c.ty - c.sy) * ease;
+      const ease = 1 - Math.pow(1 - tLocal, 3); // easeOutCubic
+
+      // spiral behavior: compute polar offset around chest point that decreases as ease -> 1
+      const spiralTurns = 3.0; // number of spiral turns
+      const idxPhase = (c.index % 100) / 100; // stable phase
+      const angle = (1 - ease) * (spiralTurns * Math.PI * 2) + idxPhase * Math.PI * 2;
+      const maxSpiralRadius = Math.max(12, Math.hypot(c.tx - c.chestX, c.ty - c.chestY)); // start radius for spiral
+      const spiralR = maxSpiralRadius * (1 - ease); // shrink to zero
+      const spiralOffsetX = Math.cos(angle) * spiralR;
+      const spiralOffsetY = Math.sin(angle) * spiralR;
+
+      // target is the mapped final position (tx,ty) but we approach via spiral around chest
+      const targetX = c.tx;
+      const targetY = c.ty;
+
+      // compute current position by lerping from start to (chest + spiral) first, then to final target as ease ->1
+      const chestGoalX = c.chestX + spiralOffsetX;
+      const chestGoalY = c.chestY + spiralOffsetY;
+
+      // combine chestGoal and final target with a secondary progress so final "snaps" into the exact mapped pos near the end
+      const secondary = Math.pow(ease, 1.6); // accelerate final snap
+      const interX = chestGoalX + (targetX - chestGoalX) * secondary;
+      const interY = chestGoalY + (targetY - chestGoalY) * secondary;
+
+      const curX = c.sx + (interX - c.sx) * ease;
+      const curY = c.sy + (interY - c.sy) * ease;
       const curZ = c.sz + (c.tz - c.sz) * ease;
       const rot = (1 - ease) * 360;
+
       c.el.style.transform = `translate3d(${curX}px, ${curY}px, ${curZ}px) rotateX(${rot}deg) rotateY(${rot*0.7}deg) scale(${0.8 + 0.2*ease})`;
       c.el.style.opacity = `${0.14 + ease*0.86}`;
+
       if(tLocal < 1) allAtTarget = false;
     }
+
     if(!allAtTarget) requestAnimationFrame(step);
     else {
       assembling = false;
-      // final micro effects
-      burstSparks(18);
+      burstSparks(22);
       flickerGlow();
-      status.innerText = "Transformation complete — look awesome!";
+      status.innerText = "Transformation complete — enjoy it!";
       setTimeout(()=>{reactor.style.transform='translate(-50%,-50%) scale(1)';}, 300);
     }
   }
+
   requestAnimationFrame(step);
 }
 
-/* disperse cubes (reset) */
+/* disperse */
 function disperse(){
-  // scatter back to random positions and fade out, then remove
-  if(cubes.length === 0) return;
-  const now = performance.now();
+  if(cubes.length === 0){ status.innerText = "Nothing to reset."; reactor.style.opacity = 0; return; }
   for(const c of cubes){
     const nx = rnd(-200, stage.clientWidth + 200);
     const ny = rnd(-200, stage.clientHeight + 200);
@@ -295,7 +403,6 @@ function disperse(){
     c.el.style.transform = `translate3d(${nx}px, ${ny}px, ${nz}px) rotateX(${rnd(-180,180)}deg) rotateY(${rnd(-180,180)}deg) scale(.5)`;
     c.el.style.opacity = 0;
   }
-  // audio cue
   stopSynth();
   reactor.style.opacity = 0;
   status.innerText = "Reset — ready.";
@@ -303,12 +410,13 @@ function disperse(){
   cubes = [];
 }
 
-/* Sparks system using 2d canvas */
+/* Sparks */
 function startSparks(){
   if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
   const W = sparksCanvas.width, H = sparksCanvas.height;
   const sparks = [];
-  for(let i=0;i<CONFIG.SPARK_COUNT;i++){
+  const SC = Math.max(30, Math.min(CONFIG.SPARK_COUNT, detailHigh ? 120 : 70));
+  for(let i=0;i<SC;i++){
     sparks.push({
       x: rnd(W*0.2, W*0.8),
       y: rnd(H*0.2, H*0.9),
@@ -327,7 +435,6 @@ function startSparks(){
     for(let s of sparks){
       s.age += dt;
       if(s.age > s.life){
-        // respawn small burst near reactor area
         s.x = stage.clientWidth/2 + rnd(-80,80);
         s.y = stage.clientHeight/2 + rnd(-40,40);
         s.vx = rnd(-1.8,1.8); s.vy = rnd(-4.2,-0.6);
@@ -341,18 +448,18 @@ function startSparks(){
       sparkCtx.fillStyle = 'rgba(180,220,255,1)';
       sparkCtx.fill();
     }
-    // fade canvas over time
     if(assembling || cubes.length>0) requestAnimationFrame(tick);
     else sparkCtx.clearRect(0,0,W,H);
   }
   requestAnimationFrame(tick);
 }
 
-/* small burst */
+/* burst */
 function burstSparks(n){
   if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
   const W = sparksCanvas.width, H = sparksCanvas.height;
-  const centerX = stage.clientWidth/2, centerY = stage.clientHeight/2;
+  const centerX = chestPoint ? chestPoint.x : stage.clientWidth/2;
+  const centerY = chestPoint ? chestPoint.y : stage.clientHeight/2;
   const burst = [];
   for(let i=0;i<n;i++){
     burst.push({
@@ -364,8 +471,6 @@ function burstSparks(n){
   let last = performance.now();
   function tick(now){
     const dt = now - last; last = now;
-    sparkCtx.clearRect(0,0,W,H);
-    // draw some existing continuous sparks as well (skip for simplicity)
     for(let b of burst){
       b.age += dt;
       if(b.age > b.life) continue;
@@ -376,89 +481,4 @@ function burstSparks(n){
       sparkCtx.fillStyle = 'rgba(200,255,255,1)';
       sparkCtx.fill();
     }
-    if(burst.some(b=>b.age < b.life)) requestAnimationFrame(tick);
-    else setTimeout(()=>sparkCtx.clearRect(0,0,W,H), 120);
-  }
-  requestAnimationFrame(tick);
-}
-
-/* small flicker */
-function flickerGlow(){
-  reactor.style.transition = 'opacity 120ms ease';
-  reactor.style.opacity = 0.8;
-  setTimeout(()=>reactor.style.opacity = 1, 120);
-  setTimeout(()=>reactor.style.opacity = 0.92, 260);
-}
-
-/* Lightweight WebAudio synth for metallic sweep */
-let audioCtx, osc1, osc2, gainNode;
-function playSynth(){
-  if(window.audioLocked) return;
-  try{
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gainNode = audioCtx.createGain(); gainNode.gain.value = 0.0001;
-    osc1 = audioCtx.createOscillator(); osc2 = audioCtx.createOscillator();
-    osc1.type = 'sawtooth'; osc2.type='triangle';
-    osc1.frequency.value = 180; osc2.frequency.value = 260;
-    const detuneLFO = audioCtx.createOscillator(); detuneLFO.frequency.value = 1.2;
-    const detuneGain = audioCtx.createGain(); detuneGain.gain.value = 20;
-    detuneLFO.connect(detuneGain); detuneGain.connect(osc2.frequency);
-    osc1.connect(gainNode); osc2.connect(gainNode); gainNode.connect(audioCtx.destination);
-    osc1.start(); osc2.start(); detuneLFO.start();
-    // fade in
-    gainNode.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 0.06);
-    // ramp frequencies a bit
-    osc1.frequency.exponentialRampToValueAtTime(720, audioCtx.currentTime + 0.9);
-    osc2.frequency.exponentialRampToValueAtTime(1160, audioCtx.currentTime + 0.9);
-    // stop after some time
-    setTimeout(()=> {
-      if(gainNode) gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
-      setTimeout(()=>stopSynth(), 1000);
-    }, 1400);
-  }catch(e){ window.audioLocked=true; /* some mobile browsers need user gesture */ }
-}
-function stopSynth(){
-  try{
-    if(osc1) { osc1.stop(); osc1.disconnect(); osc1=null; }
-    if(osc2) { osc2.stop(); osc2.disconnect(); osc2=null; }
-    if(gainNode) { gainNode.disconnect(); gainNode=null; }
-    if(audioCtx){ audioCtx.close(); audioCtx=null; }
-  }catch(e){}
-}
-
-/* main flow */
-transformBtn.addEventListener('click', async ()=>{
-  status.innerText = "Preparing ...";
-  // ensure player image loaded
-  if(!playerImg.complete){
-    playerImg.onload = ()=>transformBtn.click();
-    return;
-  }
-  // create cubes from suit
-  createCubesFromSuit((positions)=>{
-    // map to player region
-    const mapped = mapToPlayer(positions);
-    buildCubes(mapped);
-    // slight delay then animate assemble
-    setTimeout(()=>animateAssemble(), 250);
-  });
-});
-
-resetBtn.addEventListener('click', ()=>disperse());
-
-/* Preflight: check if images exist */
-function preflightCheck(){
-  // If player image missing, change status
-  playerImg.onerror = ()=>{ status.innerText = "player.png not found or failed to load. Upload player.png next to this file.";};
-  if(!suitImg.complete){
-    suitImg.onload = ()=>{ status.innerText = "ironman.png loaded. Click Transform."; };
-    suitImg.onerror = ()=>{ status.innerText = "ironman.png not found — place your suit image named ironman.png in same folder."; };
-  }else{
-    status.innerText = "Ready — click Transform.";
-  }
-}
-preflightCheck();
-
-</script>
-</body>
-</html>
+    if(burst.some(b=>b.age < b.life)) requestAnimationFrame(ti
