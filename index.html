@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Iron Man Transformation Effect</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;}
+  body.transforming{animation:bgChange 3s forwards;}
+
+  @keyframes bgChange{
+    0%{background:#000;}
+    50%{background:radial-gradient(circle,#ff0000 0%,#000 80%);}
+    100%{background:radial-gradient(circle,#111 0%,#000 80%);}
+  }
+
+  .container{position:relative;width:350px;height:600px;overflow:hidden;border-radius:20px;box-shadow:0 0 40px rgba(255,0,0,.4);}
+  .player,.ironman{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transition:opacity 1s ease,transform 1s ease;}
+  .player img,.ironman img{width:75%;height:auto;transition:transform 1s ease;}
+  .ironman{opacity:0;transform:scale(0.5);}
+
+  .arc{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px;opacity:0;border-radius:50%;box-shadow:0 0 60px 30px rgba(0,180,255,.5),inset 0 0 40px rgba(0,180,255,.8);transform:scale(0.2);transition:all 1s ease;}
+
+  .flash{position:absolute;inset:0;background:radial-gradient(circle,#fff 0%,transparent 70%);opacity:0;transition:opacity .3s;}
+
+  .energy{position:absolute;inset:0;pointer-events:none;}
+  .energy span{position:absolute;width:6px;height:6px;background:#0ff;border-radius:50%;opacity:0;animation:particle 1.2s linear infinite;}
+  @keyframes particle{
+    0%{transform:translate(0,0) scale(0);opacity:1;}
+    50%{transform:translate(100px,-100px) scale(1);opacity:.6;}
+    100%{transform:translate(200px,-200px) scale(0);opacity:0;}
+  }
+
+  .btn{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:red;color:#fff;padding:12px 24px;border:none;border-radius:8px;font-size:18px;font-weight:bold;cursor:pointer;}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="player" id="player"><img src="player.png" alt="player"></div>
+  <div class="ironman" id="ironman"><img src="ironman.png" alt="ironman"></div>
+  <div class="arc" id="arc"></div>
+  <div class="flash" id="flash"></div>
+  <div class="energy" id="energy"></div>
+  <button class="btn" id="transformBtn">Transform</button>
+</div>
+
+<script>
+const btn=document.getElementById('transformBtn');
+const player=document.getElementById('player');
+const ironman=document.getElementById('ironman');
+const arc=document.getElementById('arc');
+const flash=document.getElementById('flash');
+const energy=document.getElementById('energy');
+
+for(let i=0;i<25;i++){
+  const p=document.createElement('span');
+  p.style.left=Math.random()*300+'px';
+  p.style.top=Math.random()*600+'px';
+  p.style.animationDelay=Math.random()*1+'s';
+  energy.appendChild(p);
+}
+
+btn.addEventListener('click',()=>{
+  document.body.classList.add('transforming');
+  arc.style.opacity='1';
+  arc.style.transform='scale(1.2)';
+  setTimeout(()=>{
+    flash.style.opacity='1';
+    player.style.opacity='0';
+    ironman.style.opacity='1';
+    ironman.style.transform='scale(1)';
+  },1200);
+  setTimeout(()=>{
+    flash.style.opacity='0';
+    arc.style.opacity='0';
+  },2500);
+});
+</script>
+</body>
+</html>
