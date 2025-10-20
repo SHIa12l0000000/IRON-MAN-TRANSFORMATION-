@@ -3,59 +3,56 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nanotech Transform — High Detail + Chest Align</title>
+<title>Hybrid Nanotech Transform — Portrait (No Sound)</title>
 <style>
-  :root{ --stage-w:360px; --stage-h:720px; }
-  html,body{height:100%;margin:0;background:#050407;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial;color:#dfeeff}
-  .stage{width:var(--stage-w); height:var(--stage-h); border-radius:14px; overflow:hidden; position:relative;
-    background:radial-gradient(1200px 600px at 50% 30%, rgba(4,30,60,0.45), #000 40%);
-    box-shadow:0 30px 80px rgba(0,0,0,.7); perspective:1200px;
+  :root{ --stage-w:360px; --stage-h:720px; --cube-size:6px; }
+  html,body{height:100%;margin:0;background:#04040a;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial;color:#dfeeff}
+  .stage{
+    width:var(--stage-w); height:var(--stage-h); border-radius:16px; overflow:hidden; position:relative;
+    background:radial-gradient(800px 400px at 50% 30%, rgba(6,18,30,0.55), #000 44%);
+    box-shadow: 0 30px 70px rgba(0,0,0,.7); perspective:1200px;
   }
   .scene{position:absolute;inset:0;transform-style:preserve-3d;overflow:hidden}
-  .player-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none}
-  #playerImg{max-width:62%;height:auto;display:block;filter:drop-shadow(0 22px 40px rgba(0,0,0,.8));cursor:crosshair}
-  .world{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;z-index:6}
-  .cube{position:absolute;width:6px;height:6px;transform-style:preserve-3d;border-radius:1px;will-change:transform,opacity;box-shadow:0 0 6px rgba(0,0,0,0.6) inset;opacity:0;}
-  canvas.sparks{position:absolute;inset:0;z-index:9;pointer-events:none}
-  .reactor{position:absolute;width:28px;height:28px;border-radius:999px;z-index:11;pointer-events:none;mix-blend-mode:screen;opacity:0;transform:translate(-50%,-50%)}
-  .reactor::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 30px 12px rgba(0,170,255,0.14),0 0 80px 26px rgba(0,180,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(180,240,255,1) 0%, rgba(0,120,255,0.8) 30%, rgba(0,60,120,0.18) 70%);}
-  .flash{position:absolute;left:0;right:0;top:0;height:100%;z-index:12;pointer-events:none;mix-blend-mode:screen;opacity:0}
-  .ui{position:absolute;left:12px;right:12px;bottom:14px;display:flex;justify-content:center;gap:8px;z-index:999}
+  .player-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;pointer-events:none}
+  #playerImg{max-width:64%;height:auto;display:block;filter:drop-shadow(0 26px 40px rgba(0,0,0,.85));cursor:crosshair;border-radius:8px}
+  .world{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;z-index:7}
+  .cube{position:absolute;width:var(--cube-size);height:var(--cube-size);transform-style:preserve-3d;border-radius:1px;will-change:transform,opacity;box-shadow:0 0 8px rgba(0,0,0,0.45) inset;opacity:0;mix-blend-mode:screen;}
+  canvas.sparks{position:absolute;inset:0;z-index:12;pointer-events:none}
+  canvas.holo{position:absolute;inset:0;z-index:9;pointer-events:none}
+  .reactor{position:absolute;width:34px;height:34px;border-radius:999px;z-index:14;pointer-events:none;mix-blend-mode:screen;opacity:0;transform:translate(-50%,-50%)}
+  .reactor::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 36px 14px rgba(60,220,255,0.14),0 0 110px 36px rgba(0,150,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(200,255,255,1) 0%, rgba(0,160,255,0.85) 28%, rgba(0,70,120,0.18) 70%);}
+  .burstFlash{position:absolute;left:0;right:0;top:0;height:100%;z-index:15;pointer-events:none;mix-blend-mode:screen;opacity:0}
+  .ui{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:center;gap:8px;z-index:999}
   .btn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
   .btn.primary{background:linear-gradient(180deg,#ff6b26,#dd2b00);color:#fff}
   .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.06);color:#cfe}
-  .status{position:absolute;left:0;right:0;top:10px;text-align:center;color:#7fe;z-index:999;font-weight:700}
-  .controls{position:absolute;left:12px;top:46px;z-index:1000;display:flex;gap:6px;align-items:center}
+  .status{position:absolute;left:0;right:0;top:10px;text-align:center;color:#8ee;z-index:999;font-weight:700}
+  .controls{position:absolute;left:12px;top:44px;z-index:1000;display:flex;gap:6px;align-items:center}
   .file-input{background:rgba(255,255,255,0.03);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);color:#9fe;font-size:12px;cursor:pointer}
-  .toggle{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);color:#9fe;font-size:12px}
-  .marker{position:absolute;width:18px;height:18px;border-radius:50%;z-index:998;pointer-events:none;transform:translate(-50%,-50%);opacity:0}
-  .marker::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 14px 6px rgba(0,200,255,0.12),0 0 40px 14px rgba(0,150,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(180,240,255,1) 0%, rgba(0,120,255,0.6) 30%);}
-  .shake{animation:shakevar 400ms linear 1}
-  @keyframes shakevar{
-    0%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
-    25%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.6deg) rotateY(0.8deg)}
-    50%{transform:translate(-50%,-50%) translateZ(0) rotateZ(0.6deg) rotateX(-0.6deg)}
-    75%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.3deg) rotateY(-0.6deg)}
-    100%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
-  }
+  .toggle{background:rgba(255,255,255,0.02);padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);color:#9fe;font-size:12px;cursor:pointer}
+  .marker{position:absolute;width:22px;height:22px;border-radius:50%;z-index:998;pointer-events:none;transform:translate(-50%,-50%);opacity:0}
+  .marker::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 18px 8px rgba(0,200,255,0.12),0 0 50px 20px rgba(0,140,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(200,255,255,1) 0%, rgba(0,120,255,0.6) 30%);}
+  .shake{animation:shakevar 420ms linear 1}
+  @keyframes shakevar{0%{transform:translate(-50%,-50%) translateZ(0) rotateX(0)}25%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.6deg)}50%{transform:translate(-50%,-50%) translateZ(0) rotateZ(0.6deg)}75%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.3deg)}100%{transform:translate(-50%,-50%) translateZ(0) rotateX(0)}}
   @media (min-width:900px){:root{--stage-w:420px;--stage-h:820px}}
 </style>
 </head>
 <body>
   <div class="stage" id="stage">
-    <div class="status" id="status">Choose images or let default filenames load, click player to set chest, then Transform.</div>
+    <div class="status" id="status">Choose Player & Suit images, click the player to set chest, pick Detail, then press TRANSFORM.</div>
 
     <div class="scene" id="scene">
       <div class="player-wrap" id="playerWrap">
-        <img id="playerImg" src="" alt="player">
+        <img id="playerImg" src="" alt="player (click to set chest)">
       </div>
 
       <div class="world" id="world"></div>
 
+      <canvas id="holoCanvas" class="holo"></canvas>
       <canvas id="sparks" class="sparks"></canvas>
 
       <div class="reactor" id="reactor" aria-hidden="true"></div>
-      <div class="flash" id="flash"></div>
+      <div class="burstFlash" id="burstFlash"></div>
 
       <canvas id="suitSampler" style="display:none"></canvas>
       <img id="suitImg" src="" style="display:none">
@@ -69,7 +66,7 @@
       <label class="file-input">Suit
         <input id="suitFile" type="file" accept="image/*" style="display:none">
       </label>
-      <div class="toggle" id="detailToggle" title="Click to toggle detail mode">Detail: Normal</div>
+      <div class="toggle" id="detailToggle" title="Toggle detail">Detail: Normal</div>
     </div>
 
     <div class="ui">
@@ -79,13 +76,17 @@
   </div>
 
 <script>
-/* Full upgrade:
- - Detail toggle Normal/High (normal step=8, high step=4)
- - Click player preview to set chest coordinate
- - Cubes spiral in toward chest point
- - Auto-capping to safe cube counts
- - Tries default filenames if you don't choose files
+/* Hybrid portrait transform — no audio
+   - Holographic scan (phase1)
+   - Nanotech cube swirl (phase2)
+   - Plasma burst & settle (phase3)
+   - Click player image to set chest position
+   - Detail toggle (Normal / High)
+   - Tries default filenames but file input recommended
 */
+
+const DEFAULT_PLAYER = '1000139367.png';
+const DEFAULT_SUIT = '1000139366.png';
 
 const CONFIG_BASE = {
   CUBE_SIZE: 6,
@@ -96,9 +97,10 @@ const CONFIG_BASE = {
   STAGGER_FACTOR: 0.9,
   MAX_CUBES_NORMAL: 1400,
   MAX_CUBES_HIGH: 2500,
-  SPARK_COUNT: 70,
-  CAMERA_SHAKE_MS: 420,
-  REACTOR_SCALE_MS: 1200,
+  SPARK_COUNT_NORMAL: 70,
+  SPARK_COUNT_HIGH: 130,
+  HOLO_MS: 900,
+  BURST_MS: 600
 };
 
 let CONFIG = Object.assign({}, CONFIG_BASE);
@@ -113,320 +115,195 @@ const playerWrap = document.getElementById('playerWrap');
 const suitImg = document.getElementById('suitImg');
 const suitSampler = document.getElementById('suitSampler');
 const sparksCanvas = document.getElementById('sparks');
+const holoCanvas = document.getElementById('holoCanvas');
 const reactor = document.getElementById('reactor');
-const flash = document.getElementById('flash');
+const burstFlash = document.getElementById('burstFlash');
 const playerFile = document.getElementById('playerFile');
 const suitFile = document.getElementById('suitFile');
 const detailToggle = document.getElementById('detailToggle');
 const marker = document.getElementById('marker');
 
-let cubes = [];
-let assembling = false;
-let cubeCount = 0;
-let sparkCtx;
-let lastPlayerRect = null;
-let chestPoint = null; // {x: stageX, y: stageY} in stage coordinates
-let detailHigh = false;
+let cubes = [], assembling=false, cubeCount=0, sparkCtx=null, holoCtx=null;
+let lastPlayerRect = null, chestPoint = null, detailHigh=false;
 
-// auto default filenames (as you requested)
-const DEFAULT_PLAYER = '1000139367.png';
-const DEFAULT_SUIT = '1000139366.png';
-
-// size canvas to stage
+/* canvas sizing */
 function resize() {
   sparksCanvas.width = stage.clientWidth;
   sparksCanvas.height = stage.clientHeight;
+  holoCanvas.width = stage.clientWidth;
+  holoCanvas.height = stage.clientHeight;
 }
 window.addEventListener('resize', resize);
 resize();
 
-function rnd(min, max){return Math.random()*(max-min)+min;}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+/* helpers */
+const rnd = (a,b)=> Math.random()*(b-a)+a;
+const clamp = (v,a,b)=> Math.max(a,Math.min(b,v));
 
-/* File selectors - read as dataURL */
-playerFile.addEventListener('change', (ev)=>{
-  const f = ev.target.files && ev.target.files[0];
+/* file inputs */
+playerFile.addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
   if(!f) return;
-  const rdr = new FileReader();
-  rdr.onload = (e)=> { playerImg.src = e.target.result; status.innerText = 'Player loaded.'; };
-  rdr.readAsDataURL(f);
+  const r = new FileReader(); r.onload = ev=> { playerImg.src = ev.target.result; status.innerText='Player loaded.'; };
+  r.readAsDataURL(f);
 });
-suitFile.addEventListener('change', (ev)=>{
-  const f = ev.target.files && ev.target.files[0];
+suitFile.addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0];
   if(!f) return;
-  const rdr = new FileReader();
-  rdr.onload = (e)=> { suitImg.src = e.target.result; status.innerText = 'Suit loaded.'; };
-  rdr.readAsDataURL(f);
+  const r = new FileReader(); r.onload = ev=> { suitImg.src = ev.target.result; status.innerText='Suit loaded.'; };
+  r.readAsDataURL(f);
 });
-document.querySelectorAll('.file-input').forEach((el)=>{
-  el.addEventListener('click', (evt)=>{
-    const input = el.querySelector('input');
-    input.click();
-    evt.preventDefault();
-  });
+document.querySelectorAll('.file-input').forEach(el=>{
+  el.addEventListener('click', evt=>{ const input = el.querySelector('input'); input.click(); evt.preventDefault(); });
 });
 
-/* Toggle detail mode */
-detailToggle.addEventListener('click', ()=>{
-  detailHigh = !detailHigh;
-  detailToggle.textContent = `Detail: ${detailHigh ? 'High' : 'Normal'}`;
-  status.innerText = `Detail set to ${detailHigh ? 'High' : 'Normal'}.`;
-});
+/* detail toggle */
+detailToggle.addEventListener('click', ()=>{ detailHigh = !detailHigh; detailToggle.textContent = 'Detail: ' + (detailHigh?'High':'Normal'); status.innerText = `Detail ${detailHigh?'High':'Normal'}`; });
 
-/* Allow clicking player image to choose chest point */
-playerImg.addEventListener('click', (ev)=>{
+/* chest click on player image */
+playerImg.addEventListener('click', ev=>{
   const prect = playerImg.getBoundingClientRect();
-  if(prect.width === 0 || prect.height === 0) return;
+  if(prect.width===0) return;
   const stageRect = stage.getBoundingClientRect();
-  const clickX = ev.clientX - stageRect.left;
-  const clickY = ev.clientY - stageRect.top;
-  chestPoint = { x: clickX, y: clickY };
-  // place marker
-  marker.style.left = `${clickX}px`;
-  marker.style.top = `${clickY}px`;
+  const sx = ev.clientX - stageRect.left;
+  const sy = ev.clientY - stageRect.top;
+  chestPoint = {x: sx, y: sy};
+  // marker pulse
+  marker.style.left = sx + 'px'; marker.style.top = sy + 'px';
   marker.style.opacity = 1;
-  marker.style.transition = 'opacity 300ms ease, transform 260ms ease';
   marker.style.transform = 'translate(-50%,-50%) scale(1.25)';
-  setTimeout(()=>{ marker.style.transform='translate(-50%,-50%) scale(1)'; }, 140);
-  setTimeout(()=>{ marker.style.opacity = 0.9; }, 260);
-  status.innerText = 'Reactor target locked on chest.';
+  setTimeout(()=> marker.style.transform = 'translate(-50%,-50%) scale(1)', 120);
+  status.innerText = 'Chest target locked';
 });
 
-/* attempt to load default filenames if present (useful if serving alongside assets) */
-function tryLoadDefaults(){
-  // set src attributes — browser will attempt to load them; if not found, onerror will handle
-  playerImg.src = DEFAULT_PLAYER;
-  suitImg.src = DEFAULT_SUIT;
-  status.innerText = 'Attempting to load default images (or choose via controls).';
-}
-tryLoadDefaults();
+/* attempt to load defaults (will fail silently if blocked by browser) */
+playerImg.src = DEFAULT_PLAYER;
+suitImg.src = DEFAULT_SUIT;
+status.innerText = 'Choose Player & Suit or use defaults (click player to set chest).';
 
-/* create cubes from suit image by sampling */
+/* sample suit image to positions */
 function createCubesFromSuit(cb){
-  if(!suitImg.complete || suitImg.naturalWidth === 0){
-    suitImg.onload = ()=> createCubesFromSuit(cb);
-    suitImg.onerror = ()=> { status.innerText = "Couldn't load suit image — choose a different file or ensure the default file exists."; };
-    return;
-  }
+  if(!suitImg.complete || suitImg.naturalWidth===0){ suitImg.onload = ()=> createCubesFromSuit(cb); suitImg.onerror = ()=> status.innerText='Load suit (top-left)'; return; }
   resize();
-  const sW = suitImg.naturalWidth;
-  const sH = suitImg.naturalHeight;
+  const sW = suitImg.naturalWidth, sH = suitImg.naturalHeight;
   const step = detailHigh ? CONFIG_BASE.SAMPLE_STEP_HIGH : CONFIG_BASE.SAMPLE_STEP_NORMAL;
   const maxCap = detailHigh ? CONFIG_BASE.MAX_CUBES_HIGH : CONFIG_BASE.MAX_CUBES_NORMAL;
-
   suitSampler.width = sW; suitSampler.height = sH;
-  const sCtx = suitSampler.getContext('2d');
-  sCtx.clearRect(0,0,sW,sH);
-  sCtx.drawImage(suitImg,0,0,sW,sH);
+  const sCtx = suitSampler.getContext('2d'); sCtx.clearRect(0,0,sW,sH); sCtx.drawImage(suitImg,0,0,sW,sH);
   const imgData = sCtx.getImageData(0,0,sW,sH).data;
-
   const positions = [];
   for(let y=0;y<sH;y+=step){
     for(let x=0;x<sW;x+=step){
-      const idx = (y*sW + x)*4;
-      const a = imgData[idx+3];
-      if(a > 30){
-        const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
-        positions.push({x, y, color:`rgb(${r},${g},${b})`});
-      }
+      const idx = (y*sW+x)*4; const a = imgData[idx+3];
+      if(a>30){ const r=imgData[idx], g=imgData[idx+1], b=imgData[idx+2]; positions.push({x,y,color:`rgb(${r},${g},${b})`}); }
     }
   }
-  // cap positions smartly if too many
   if(positions.length > maxCap){
-    const stride = Math.ceil(positions.length / maxCap);
-    const filtered = [];
+    const stride = Math.ceil(positions.length/maxCap); const filtered=[];
     for(let i=0;i<positions.length;i+=stride) filtered.push(positions[i]);
     positions.length=0; positions.push(...filtered);
   }
   cb(positions);
 }
 
-/* Map suit pixels to player's bounding box */
+/* map to player bounding box */
 function mapToPlayer(positions){
   const playerRect = playerImg.getBoundingClientRect();
   const stageRect = stage.getBoundingClientRect();
-  if(playerRect.width === 0 || playerRect.height === 0){
-    status.innerText = "Player image not visible yet — wait or reload.";
-    return [];
-  }
+  if(playerRect.width===0) return [];
   lastPlayerRect = playerRect;
   const suitW = suitImg.naturalWidth, suitH = suitImg.naturalHeight;
-  const scaleX = playerRect.width / suitW;
-  const scaleY = playerRect.height / suitH;
-  const offsetX = playerRect.left - stageRect.left;
-  const offsetY = playerRect.top - stageRect.top;
-
-  return positions.map(p=>{
-    const tx = Math.round(p.x * scaleX + offsetX);
-    const ty = Math.round(p.y * scaleY + offsetY);
-    return {tx, ty, color:p.color};
-  });
+  const scaleX = playerRect.width / suitW, scaleY = playerRect.height / suitH;
+  const offsetX = playerRect.left - stageRect.left, offsetY = playerRect.top - stageRect.top;
+  return positions.map(p=>({ tx: Math.round(p.x*scaleX + offsetX), ty: Math.round(p.y*scaleY + offsetY), color: p.color }));
 }
 
-/* build cubes DOM */
+/* build cube DOM */
 function buildCubes(mapped){
-  world.innerHTML = '';
-  cubes = [];
-  const W = stage.clientWidth, H = stage.clientHeight;
-  const centerX = W/2, centerY = H/2;
+  world.innerHTML=''; cubes=[];
+  const W = stage.clientWidth, H = stage.clientHeight, centerX = W/2, centerY = H/2;
   mapped.forEach((m,i)=>{
-    const el = document.createElement('div');
-    el.className = 'cube';
-    el.style.width = CONFIG.CUBE_SIZE + 'px';
-    el.style.height = CONFIG.CUBE_SIZE + 'px';
-    el.style.background = m.color;
-    el.style.opacity = '0';
-    // start location random spherical
-    const theta = rnd(0, Math.PI*2);
-    const phi = rnd(0, Math.PI);
-    const r = rnd(120, CONFIG.START_RADIUS);
-    const sx = centerX + r*Math.cos(theta)*Math.sin(phi);
-    const sy = centerY + r*Math.sin(theta)*Math.sin(phi);
-    const sz = rnd(-900, 900);
+    const el = document.createElement('div'); el.className='cube';
+    el.style.width = CONFIG_BASE.CUBE_SIZE + 'px'; el.style.height = CONFIG_BASE.CUBE_SIZE + 'px';
+    el.style.background = m.color; el.style.opacity='0';
+    const theta = rnd(0,Math.PI*2), phi = rnd(0,Math.PI), r = rnd(120,CONFIG_BASE.START_RADIUS);
+    const sx = centerX + r*Math.cos(theta)*Math.sin(phi), sy = centerY + r*Math.sin(theta)*Math.sin(phi), sz = rnd(-900,900);
     el.style.transform = `translate3d(${sx}px, ${sy}px, ${sz}px) scale(.8) rotateX(${rnd(-90,90)}deg) rotateY(${rnd(-90,90)}deg)`;
     world.appendChild(el);
-
-    // if no chestPoint selected, default to player center
-    const targetX = chestPoint ? chestPoint.x : (m.tx + (CONFIG.CUBE_SIZE/2));
-    const targetY = chestPoint ? chestPoint.y : (m.ty + (CONFIG.CUBE_SIZE/2));
-    // We'll store two targets: primary (chest) for spiral center and per-cube final mapped pos
+    const targetChestX = chestPoint ? chestPoint.x : (m.tx + (CONFIG_BASE.CUBE_SIZE/2));
+    const targetChestY = chestPoint ? chestPoint.y : (m.ty + (CONFIG_BASE.CUBE_SIZE/2));
     cubes.push({
       el, sx, sy, sz,
-      tx: m.tx + (CONFIG.CUBE_SIZE/2),
-      ty: m.ty + (CONFIG.CUBE_SIZE/2),
+      tx: m.tx + (CONFIG_BASE.CUBE_SIZE/2),
+      ty: m.ty + (CONFIG_BASE.CUBE_SIZE/2),
       tz: 0,
-      chestX: targetX,
-      chestY: targetY,
+      chestX: targetChestX, chestY: targetChestY,
       index: i,
-      delay: (i / mapped.length) * CONFIG.ASSEMBLE_MS * CONFIG.STAGGER_FACTOR * Math.random()
+      delay: (i / mapped.length) * CONFIG_BASE.ASSEMBLE_MS * CONFIG_BASE.STAGGER_FACTOR * Math.random()
     });
   });
   cubeCount = cubes.length;
   status.innerText = `Cubes ready: ${cubeCount}. Click TRANSFORM.`;
 }
 
-/* animate with spiral toward chest */
-function animateAssemble(){
-  if(assembling) return;
-  assembling = true;
-  const startTime = performance.now();
-
-  // position reactor at chest (or center)
-  const stageRect = stage.getBoundingClientRect();
-  if(chestPoint){
-    reactor.style.left = `${chestPoint.x}px`;
-    reactor.style.top = `${chestPoint.y}px`;
-  } else if(lastPlayerRect){
-    const cx = lastPlayerRect.left - stageRect.left + lastPlayerRect.width/2;
-    const cy = lastPlayerRect.top - stageRect.top + lastPlayerRect.height/2;
-    reactor.style.left = `${cx}px`; reactor.style.top = `${cy}px`;
-  } else {
-    reactor.style.left = `${stage.clientWidth/2}px`;
-    reactor.style.top = `${stage.clientHeight/2}px`;
-  }
-
-  // visuals/audio
-  playSynth();
-  reactor.style.transition = `opacity ${CONFIG.REACTOR_SCALE_MS}ms ease-out, transform ${CONFIG.REACTOR_SCALE_MS}ms cubic-bezier(.2,.9,.2,1)`;
-  reactor.style.opacity = 1;
-  reactor.style.transform = 'translate(-50%,-50%) scale(1.35)';
-  flash.style.transition = 'opacity 180ms ease-out';
-  flash.style.background = 'linear-gradient(180deg, rgba(180,230,255,0.12), rgba(120,220,255,0.05))';
-  flash.style.opacity = 0.08;
-  setTimeout(()=>flash.style.opacity = 0, 160);
-
-  startSparks();
-  playerWrap.classList.add('shake');
-  setTimeout(()=>playerWrap.classList.remove('shake'), CONFIG.CAMERA_SHAKE_MS);
-
-  function step(now){
-    const tGlobal = now - startTime;
-    let allAtTarget = true;
-    for(const c of cubes){
-      const tLocal = clamp((tGlobal - c.delay)/CONFIG.ASSEMBLE_MS, 0, 1);
-      const ease = 1 - Math.pow(1 - tLocal, 3); // easeOutCubic
-
-      // spiral behavior: compute polar offset around chest point that decreases as ease -> 1
-      const spiralTurns = 3.0; // number of spiral turns
-      const idxPhase = (c.index % 100) / 100; // stable phase
-      const angle = (1 - ease) * (spiralTurns * Math.PI * 2) + idxPhase * Math.PI * 2;
-      const maxSpiralRadius = Math.max(12, Math.hypot(c.tx - c.chestX, c.ty - c.chestY)); // start radius for spiral
-      const spiralR = maxSpiralRadius * (1 - ease); // shrink to zero
-      const spiralOffsetX = Math.cos(angle) * spiralR;
-      const spiralOffsetY = Math.sin(angle) * spiralR;
-
-      // target is the mapped final position (tx,ty) but we approach via spiral around chest
-      const targetX = c.tx;
-      const targetY = c.ty;
-
-      // compute current position by lerping from start to (chest + spiral) first, then to final target as ease ->1
-      const chestGoalX = c.chestX + spiralOffsetX;
-      const chestGoalY = c.chestY + spiralOffsetY;
-
-      // combine chestGoal and final target with a secondary progress so final "snaps" into the exact mapped pos near the end
-      const secondary = Math.pow(ease, 1.6); // accelerate final snap
-      const interX = chestGoalX + (targetX - chestGoalX) * secondary;
-      const interY = chestGoalY + (targetY - chestGoalY) * secondary;
-
-      const curX = c.sx + (interX - c.sx) * ease;
-      const curY = c.sy + (interY - c.sy) * ease;
-      const curZ = c.sz + (c.tz - c.sz) * ease;
-      const rot = (1 - ease) * 360;
-
-      c.el.style.transform = `translate3d(${curX}px, ${curY}px, ${curZ}px) rotateX(${rot}deg) rotateY(${rot*0.7}deg) scale(${0.8 + 0.2*ease})`;
-      c.el.style.opacity = `${0.14 + ease*0.86}`;
-
-      if(tLocal < 1) allAtTarget = false;
+/* Phase: Holographic scan (grid + polygons) */
+function startHolographic(duration=CONFIG_BASE.HOLO_MS){
+  holoCtx = holoCanvas.getContext('2d');
+  const W = holoCanvas.width, H = holoCanvas.height;
+  let start = performance.now();
+  function frame(now){
+    const t = (now - start)/duration;
+    holoCtx.clearRect(0,0,W,H);
+    // radial scan centered on chest or player center
+    const cx = chestPoint ? chestPoint.x : W/2;
+    const cy = chestPoint ? chestPoint.y : H/2;
+    // scan ring
+    const ringR = (Math.sin(t*Math.PI*2)+1)*30 + (1-t)*120;
+    holoCtx.save();
+    holoCtx.globalCompositeOperation = 'lighter';
+    // soft radial glow
+    const g = holoCtx.createRadialGradient(cx,cy,ringR*0.1,cx,cy,ringR*2);
+    g.addColorStop(0,'rgba(120,220,255,'+ (0.45*(1-t)) +')');
+    g.addColorStop(1,'rgba(0,80,120,0)');
+    holoCtx.fillStyle = g; holoCtx.fillRect(0,0,W,H);
+    // draw scanlines
+    holoCtx.strokeStyle = 'rgba(140,230,255,0.12)'; holoCtx.lineWidth = 1;
+    for(let y = cy - 180; y < cy + 180; y += 12){
+      holoCtx.beginPath(); holoCtx.moveTo(cx-220,y); holoCtx.lineTo(cx+220,y); holoCtx.stroke();
     }
-
-    if(!allAtTarget) requestAnimationFrame(step);
-    else {
-      assembling = false;
-      burstSparks(22);
-      flickerGlow();
-      status.innerText = "Transformation complete — enjoy it!";
-      setTimeout(()=>{reactor.style.transform='translate(-50%,-50%) scale(1)';}, 300);
+    // draw rotating polygons around chest
+    const polyCount = 8;
+    for(let i=0;i<polyCount;i++){
+      const ang = now/600 + i*(Math.PI*2/polyCount);
+      const rr = 40 + (i*6) + Math.sin(now/500 + i)*18*(1 - t);
+      holoCtx.beginPath();
+      for(let k=0;k<5;k++){
+        const a = ang + k*(Math.PI*2/5);
+        const x = cx + Math.cos(a)*rr;
+        const y = cy + Math.sin(a)*rr;
+        if(k===0) holoCtx.moveTo(x,y); else holoCtx.lineTo(x,y);
+      }
+      holoCtx.closePath();
+      holoCtx.fillStyle = `rgba(60,200,255,${0.08 + 0.18*(1-t)})`;
+      holoCtx.fill();
+      holoCtx.strokeStyle = `rgba(160,255,255,${0.06 + 0.12*(1-t)})`;
+      holoCtx.stroke();
     }
+    holoCtx.restore();
+    if(t < 1) requestAnimationFrame(frame);
+    else { holoCtx.clearRect(0,0,W,H); }
   }
-
-  requestAnimationFrame(step);
+  requestAnimationFrame(frame);
 }
 
-/* disperse */
-function disperse(){
-  if(cubes.length === 0){ status.innerText = "Nothing to reset."; reactor.style.opacity = 0; return; }
-  for(const c of cubes){
-    const nx = rnd(-200, stage.clientWidth + 200);
-    const ny = rnd(-200, stage.clientHeight + 200);
-    const nz = rnd(-1200, 1200);
-    c.el.style.transition = 'transform 900ms cubic-bezier(.2,.9,.2,1), opacity 700ms ease';
-    c.el.style.transform = `translate3d(${nx}px, ${ny}px, ${nz}px) rotateX(${rnd(-180,180)}deg) rotateY(${rnd(-180,180)}deg) scale(.5)`;
-    c.el.style.opacity = 0;
-  }
-  stopSynth();
-  reactor.style.opacity = 0;
-  status.innerText = "Reset — ready.";
-  setTimeout(()=> world.innerHTML = '', 900);
-  cubes = [];
-}
-
-/* Sparks */
+/* Sparks (particles) */
 function startSparks(){
   if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
   const W = sparksCanvas.width, H = sparksCanvas.height;
+  const SC = detailHigh ? CONFIG_BASE.SPARK_COUNT_HIGH : CONFIG_BASE.SPARK_COUNT_NORMAL;
   const sparks = [];
-  const SC = Math.max(30, Math.min(CONFIG.SPARK_COUNT, detailHigh ? 120 : 70));
   for(let i=0;i<SC;i++){
-    sparks.push({
-      x: rnd(W*0.2, W*0.8),
-      y: rnd(H*0.2, H*0.9),
-      vx: rnd(-2.4,2.4),
-      vy: rnd(-3.8,-0.6),
-      life: rnd(280, 1100),
-      age: 0,
-      size: rnd(1,3),
-      alpha: rnd(0.2,0.9)
-    });
+    sparks.push({ x: rnd(W*0.2,W*0.8), y: rnd(H*0.2,H*0.9), vx: rnd(-2.6,2.6), vy: rnd(-3.8,-0.3), life: rnd(240,1100), age: 0, size: rnd(1,3), alpha: rnd(0.18,0.85) });
   }
   let last = performance.now();
   function tick(now){
@@ -434,19 +311,10 @@ function startSparks(){
     sparkCtx.clearRect(0,0,W,H);
     for(let s of sparks){
       s.age += dt;
-      if(s.age > s.life){
-        s.x = stage.clientWidth/2 + rnd(-80,80);
-        s.y = stage.clientHeight/2 + rnd(-40,40);
-        s.vx = rnd(-1.8,1.8); s.vy = rnd(-4.2,-0.6);
-        s.age = 0; s.life = rnd(220,900);
-        s.size = rnd(1,3); s.alpha = rnd(0.2,0.9);
-      }
-      s.x += s.vx * dt/16; s.y += s.vy * dt/16; s.vy += 0.04 * dt/16;
-      sparkCtx.globalAlpha = clamp((1 - s.age/s.life) * s.alpha, 0, 1);
-      sparkCtx.beginPath();
-      sparkCtx.arc(s.x, s.y, s.size, 0, Math.PI*2);
-      sparkCtx.fillStyle = 'rgba(180,220,255,1)';
-      sparkCtx.fill();
+      if(s.age > s.life){ s.x = (chestPoint?chestPoint.x:W/2)+rnd(-60,60); s.y = (chestPoint?chestPoint.y:W/2)+rnd(-40,40); s.vx = rnd(-2,2); s.vy = rnd(-4,0); s.age=0; s.life = rnd(220,900); }
+      s.x += s.vx * dt/16; s.y += s.vy * dt/16; s.vy += 0.04*dt/16;
+      sparkCtx.globalAlpha = clamp((1 - s.age/s.life)*s.alpha,0,1);
+      sparkCtx.beginPath(); sparkCtx.arc(s.x,s.y,s.size,0,Math.PI*2); sparkCtx.fillStyle = 'rgba(200,240,255,1)'; sparkCtx.fill();
     }
     if(assembling || cubes.length>0) requestAnimationFrame(tick);
     else sparkCtx.clearRect(0,0,W,H);
@@ -454,31 +322,102 @@ function startSparks(){
   requestAnimationFrame(tick);
 }
 
-/* burst */
+/* burst visual (plasma) */
+function doBurst(){
+  const el = burstFlash;
+  el.style.background = 'radial-gradient(circle at center, rgba(255,255,240,0.95), rgba(255,180,120,0.6) 30%, rgba(160,220,255,0.08) 60%, rgba(0,0,0,0) 100%)';
+  el.style.opacity = 0.0; el.style.transition = 'opacity 140ms ease-out, transform 480ms cubic-bezier(.2,.9,.2,1)';
+  el.style.transform = 'scale(0.92)';
+  requestAnimationFrame(()=>{ el.style.opacity = 1; el.style.transform = 'scale(1.06)'; });
+  // shockwave ring using holo canvas overlay quickly
+  const ctx = holoCanvas.getContext('2d'); const W = holoCanvas.width, H = holoCanvas.height;
+  let start = performance.now();
+  const duration = CONFIG_BASE.BURST_MS;
+  const cx = chestPoint?chestPoint.x:W/2, cy = chestPoint?chestPoint.y:H/2;
+  function anim(now){
+    const t = (now-start)/duration;
+    ctx.clearRect(0,0,W,H);
+    if(t < 1){
+      ctx.beginPath();
+      ctx.arc(cx,cy, 60 + t*300, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(255,200,140,${1 - t})`;
+      ctx.lineWidth = 6 * (1 - t) + 1;
+      ctx.stroke();
+      requestAnimationFrame(anim);
+    } else { ctx.clearRect(0,0,W,H); }
+  }
+  requestAnimationFrame(anim);
+  // fade burst
+  setTimeout(()=>{ el.style.opacity = 0; setTimeout(()=> el.style.transform='scale(1)', 220); }, 140);
+}
+
+/* main assemble: cubes spiral toward chest then snap to mapped positions */
+function animateAssemble(){
+  if(assembling) return;
+  assembling = true;
+  const startTime = performance.now();
+  // reactor placement
+  if(chestPoint){
+    reactor.style.left = chestPoint.x + 'px'; reactor.style.top = chestPoint.y + 'px';
+  } else if(lastPlayerRect){
+    const sr = stage.getBoundingClientRect();
+    reactor.style.left = (lastPlayerRect.left - sr.left + lastPlayerRect.width/2) + 'px';
+    reactor.style.top = (lastPlayerRect.top - sr.top + lastPlayerRect.height/2) + 'px';
+  } else {
+    reactor.style.left = (stage.clientWidth/2) + 'px'; reactor.style.top = (stage.clientHeight/2) + 'px';
+  }
+  reactor.style.opacity = 1; reactor.style.transform = 'translate(-50%,-50%) scale(1.3)';
+  startSparks();
+
+  playerWrap.classList.add('shake'); setTimeout(()=>playerWrap.classList.remove('shake'), CONFIG_BASE.CAMERA_SHAKE_MS);
+
+  function step(now){
+    const tGlobal = now - startTime;
+    let allAtTarget=true;
+    for(const c of cubes){
+      const tLocal = clamp((tGlobal - c.delay)/CONFIG_BASE.ASSEMBLE_MS, 0, 1);
+      const ease = 1 - Math.pow(1 - tLocal, 3);
+      // spiral math
+      const spiralTurns = 3.0;
+      const idxPhase = (c.index % 100)/100;
+      const angle = (1 - ease) * (spiralTurns * Math.PI * 2) + idxPhase * Math.PI * 2;
+      const maxR = Math.max(12, Math.hypot(c.tx - c.chestX, c.ty - c.chestY));
+      const spiralR = maxR * (1 - ease);
+      const sOffX = Math.cos(angle) * spiralR;
+      const sOffY = Math.sin(angle) * spiralR;
+      const chestGoalX = c.chestX + sOffX;
+      const chestGoalY = c.chestY + sOffY;
+      const secondary = Math.pow(ease, 1.6);
+      const interX = chestGoalX + (c.tx - chestGoalX) * secondary;
+      const interY = chestGoalY + (c.ty - chestGoalY) * secondary;
+      const curX = c.sx + (interX - c.sx) * ease;
+      const curY = c.sy + (interY - c.sy) * ease;
+      const curZ = c.sz + (c.tz - c.sz) * ease;
+      const rot = (1 - ease) * 360;
+      c.el.style.transform = `translate3d(${curX}px, ${curY}px, ${curZ}px) rotateX(${rot}deg) rotateY(${rot*0.7}deg) scale(${0.8 + 0.2*ease})`;
+      c.el.style.opacity = `${0.16 + ease*0.84}`;
+      if(tLocal < 1) allAtTarget = false;
+    }
+    if(!allAtTarget) requestAnimationFrame(step);
+    else {
+      // final micro effects
+      assembling = false;
+      doBurst();
+      // brief settling: ensure reactor scales down
+      reactor.style.transform = 'translate(-50%,-50%) scale(1)';
+      status.innerText = 'Transformation complete';
+      // small sparkle burst
+      burstSparks(26);
+      setTimeout(()=>{ /* leave cubes visible */ }, 300);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/* burst sparks function */
 function burstSparks(n){
   if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
   const W = sparksCanvas.width, H = sparksCanvas.height;
-  const centerX = chestPoint ? chestPoint.x : stage.clientWidth/2;
-  const centerY = chestPoint ? chestPoint.y : stage.clientHeight/2;
-  const burst = [];
-  for(let i=0;i<n;i++){
-    burst.push({
-      x:centerX, y:centerY,
-      vx: rnd(-8,8), vy: rnd(-10,2),
-      life: rnd(300,900), age:0, size:rnd(1.2,3), alpha:1
-    });
-  }
-  let last = performance.now();
-  function tick(now){
-    const dt = now - last; last = now;
-    for(let b of burst){
-      b.age += dt;
-      if(b.age > b.life) continue;
-      b.x += b.vx * dt/16; b.y += b.vy * dt/16; b.vy += 0.12*dt/16;
-      sparkCtx.globalAlpha = clamp((1 - b.age / b.life) * b.alpha, 0, 1);
-      sparkCtx.beginPath();
-      sparkCtx.arc(b.x, b.y, b.size, 0, Math.PI*2);
-      sparkCtx.fillStyle = 'rgba(200,255,255,1)';
-      sparkCtx.fill();
-    }
-    if(burst.some(b=>b.age < b.life)) requestAnimationFrame(ti
+  const cx = chestPoint ? chestPoint.x : W/2, cy = chestPoint ? chestPoint.y : H/2;
+  const burst = []; for(let i=0;i<n;i++) burst.push({ x: cx, y: cy, vx: rnd(-8,8), vy: rnd(-10,2), life: rnd(300,900), age:0, size:rnd(1.2,3), alpha:1 });
+  let last = pe
