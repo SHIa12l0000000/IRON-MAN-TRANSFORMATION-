@@ -3,212 +3,461 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Avengers‑Level Iron Man Transformation (Pure HTML/CSS/JS)</title>
+<title>Ra.One / Ironman Nanotech Transform</title>
 <style>
-  :root{--w:360px;--h:720px}
-  html,body{height:100%;margin:0;background:#000;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial}
-  .panel{width:var(--w);height:var(--h);border-radius:18px;overflow:hidden;position:relative;background:linear-gradient(180deg,#050508,#0b0910);box-shadow:0 30px 80px rgba(0,0,0,.8), 0 8px 30px rgba(255,0,40,.04) inset}
-
-  /* background dynamic gradient layers */
-  .bgLayer{position:absolute;inset:0;pointer-events:none;}
-  .bgLayer.canvas{mix-blend-mode:screen}
-
-  /* human layer (user image) */
-  .human{position:absolute;left:50%;top:52%;transform:translate(-50%,-52%);z-index:30;filter:drop-shadow(0 30px 40px rgba(0,0,0,.65));}
-  .human img{display:block;max-width:66%;height:auto;transition:transform .9s cubic-bezier(.2,.9,.3,1),filter .9s}
-
-  /* suit layer (ironman PNG) sits above and uses multiply/screen blending for metal look */
-  .suit{position:absolute;left:50%;top:52%;transform:translate(-50%,-52%);z-index:70;pointer-events:none}
-  .suit img{display:block;max-width:66%;height:auto;opacity:0;transform:scale(.85);transition:opacity .9s ease, transform 1s cubic-bezier(.2,.9,.3,1);filter:drop-shadow(0 28px 48px rgba(0,0,0,.7))}
-
-  /* nano-particles canvas (behind suit for assembly) */
-  canvas{position:absolute;inset:0;z-index:40;}
-
-  /* hologram grid */
-  .holo{position:absolute;left:0;right:0;bottom:0;height:34%;z-index:45;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6));mix-blend-mode:screen}
-
-  /* arc reactor glow */
-  .arc{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);z-index:80;border-radius:50%;width:48px;height:48px;box-shadow:0 0 18px 8px rgba(0,160,255,.18),0 0 120px 36px rgba(0,120,255,.06);opacity:0;transition:opacity .6s,transform .9s}
-  .arc .core{width:14px;height:14px;background:radial-gradient(circle,#fff,#8ff);border-radius:50%;margin:17px}
-
-  /* armor shards (DOM elements) */
-  .shards{position:absolute;inset:0;z-index:60;pointer-events:none}
-  .shard{position:absolute;width:12px;height:26px;border-radius:4px;background:linear-gradient(90deg,#ffd08a,#ff3d3d);box-shadow:0 6px 18px rgba(255,60,60,.12);opacity:0;transform-origin:center;filter:blur(.2px)}
-
-  /* beams */
-  .beam{position:absolute;left:50%;top:0;width:2px;height:100%;transform:translateX(-50%);pointer-events:none;mix-blend-mode:screen;z-index:20}
-
+  :root{
+    --stage-w:360px; /* change to full-screen by setting to 100vw / 100vh via CSS below */
+    --stage-h:720px;
+  }
+  html,body{height:100%;margin:0;background:#050407;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Roboto,Arial;color:#dfeeff}
+  .stage{
+    width:var(--stage-w); height:var(--stage-h);
+    border-radius:14px; overflow:hidden; position:relative; background:radial-gradient(1200px 600px at 50% 30%, rgba(4,30,60,0.45), #000 40%);
+    box-shadow: 0 30px 80px rgba(0,0,0,.7); perspective:1200px;
+  }
+  .scene{position:absolute;inset:0;transform-style:preserve-3d;overflow:hidden}
+  /* Player preview */
+  .player-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none}
+  img#playerImg{max-width:62%;height:auto;display:block;filter:drop-shadow(0 22px 40px rgba(0,0,0,.8))}
+  /* cubes world layer */
+  .world{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none;z-index:6}
+  .cube{
+    position:absolute;width:6px;height:6px;transform-style:preserve-3d;border-radius:1px;will-change:transform,opacity;
+    box-shadow:0 0 6px rgba(0,0,0,0.6) inset;
+    opacity:0;
+  }
+  /* sparks */
+  canvas.sparks{position:absolute;inset:0;z-index:9;pointer-events:none}
+  /* arc reactor */
+  .reactor{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:999px;z-index:11;pointer-events:none;mix-blend-mode:screen;opacity:0}
+  .reactor::before{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 30px 12px rgba(0,170,255,0.14),0 0 80px 26px rgba(0,180,255,0.06);background:radial-gradient(circle at 40% 35%, rgba(180,240,255,1) 0%, rgba(0,120,255,0.8) 30%, rgba(0,60,120,0.18) 70%);}
+  .flash{position:absolute;left:0;right:0;top:0;height:100%;z-index:12;pointer-events:none;mix-blend-mode:screen;opacity:0}
   /* UI */
-  .ui{position:absolute;left:10px;right:10px;bottom:12px;z-index:200;display:flex;justify-content:center;gap:8px}
-  button{background:linear-gradient(180deg,#ff4d4d,#c12b2b);border:none;padding:12px 18px;border-radius:12px;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(197,40,40,.22)}
-  .small{background:transparent;border:1px solid rgba(255,255,255,.06);font-weight:700}
-
-  /* final post-transform subtle glow on suit */
-  .panel.transformed .suit img{opacity:1;transform:scale(1)}
-  .panel.transformed .human img{filter:brightness(.06) saturate(.3) blur(0px);transform:scale(1.02)}
-  .panel.transformed .arc{opacity:1;transform:scale(1.08)}
-
-  /* cinematic vignette */
-  .vignette{position:absolute;inset:0;z-index:300;pointer-events:none;background:radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.62) 100%)}
+  .ui{position:absolute;left:12px;right:12px;bottom:14px;display:flex;justify-content:center;gap:8px;z-index:999}
+  .btn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
+  .btn.primary{background:linear-gradient(180deg,#ff6b26,#dd2b00);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.06);color:#cfe}
+  .status{position:absolute;left:0;right:0;top:10px;text-align:center;color:#7fe;z-index:999;font-weight:700}
+  /* camera shake helper */
+  .shake{animation:shakevar 400ms linear 1}
+  @keyframes shakevar{
+    0%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
+    25%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.6deg) rotateY(0.8deg)}
+    50%{transform:translate(-50%,-50%) translateZ(0) rotateZ(0.6deg) rotateX(-0.6deg)}
+    75%{transform:translate(-50%,-50%) translateZ(0) rotateZ(-0.3deg) rotateY(-0.6deg)}
+    100%{transform:translate(-50%,-50%) translateZ(0) rotateX(0) rotateY(0)}
+  }
+  /* small responsive tweak */
+  @media (min-width:900px){:root{--stage-w:420px;--stage-h:820px}}
 </style>
 </head>
 <body>
-  <div class="panel" id="panel">
-    <canvas id="bgCanvas" class="bgLayer canvas"></canvas>
-    <canvas id="nanoCanvas"></canvas>
+  <div class="stage" id="stage">
+    <div class="status" id="status">Place <strong>player.png</strong> and <strong>ironman.png</strong> beside this HTML and click <strong>Transform</strong></div>
 
-    <div class="human" id="human"><img id="humanImg" src="player.png" alt="player"></div>
-    <div class="suit" id="suit"><img id="suitImg" src="ironman.png" alt="suit"></div>
+    <div class="scene" id="scene">
+      <div class="player-wrap" id="playerWrap">
+        <img id="playerImg" src="player.png" alt="player (player.png)">
+      </div>
 
-    <div class="shards" id="shards"></div>
+      <div class="world" id="world"></div>
 
-    <div class="arc" id="arc"><div class="core"></div></div>
+      <canvas id="sparks" class="sparks"></canvas>
 
-    <div class="holo" id="holo"></div>
-    <div class="vignette"></div>
+      <div class="reactor" id="reactor"></div>
+      <div class="flash" id="flash"></div>
+
+      <!-- hidden samplers (canvas) -->
+      <canvas id="suitSampler" style="display:none"></canvas>
+      <canvas id="playerSampler" style="display:none"></canvas>
+      <img id="suitImg" src="ironman.png" style="display:none" crossorigin="anonymous">
+    </div>
 
     <div class="ui">
-      <button id="transformBtn">Transform</button>
-      <button id="resetBtn" class="small">Reset</button>
+      <button class="btn primary" id="transformBtn">Transform</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
     </div>
   </div>
 
 <script>
-/*
- Advanced pure JS Iron‑Man style transformation
- - No external libraries
- - Replace player.png and ironman.png with your images
- - Best results: player PNG with transparent background and ironman PNG aligned similarly
+/* Cinematic nanotech cube assembly
+   - Samples ironman.png into small sources
+   - Places cubes in 3D space and animates them toward target positions overlaying the player
+   - Adds sparks, flash, reactor glow, camera shake and audio cues (synth)
+   - Configurable fidelity & performance settings below
 */
 
-const panel = document.getElementById('panel');
-const humanImg = document.getElementById('humanImg');
-const suitImg = document.getElementById('suitImg');
-const shardsRoot = document.getElementById('shards');
-const nanoCanvas = document.getElementById('nanoCanvas');
-const bgCanvas = document.getElementById('bgCanvas');
-const arc = document.getElementById('arc');
+const CONFIG = {
+  CUBE_SIZE: 6,          // size of cube in px
+  SAMPLE_STEP: 8,        // pixel sampling step from suit image. Lower -> more cubes
+  START_RADIUS: 600,     // radius around scene cubes fly from
+  ASSEMBLE_MS: 2200,     // duration of assembly lerp (ms)
+  STAGGER_FACTOR: 0.9,   // delay spread for cubes
+  MAX_CUBES: 1400,       // safety cap
+  SPARK_COUNT: 70,       // number of spark particles
+  CAMERA_SHAKE_MS: 420,  // camera shake duration
+  REACTOR_SCALE_MS: 1200,
+};
+
+const stage = document.getElementById('stage');
+const world = document.getElementById('world');
 const transformBtn = document.getElementById('transformBtn');
 const resetBtn = document.getElementById('resetBtn');
+const status = document.getElementById('status');
+const playerImg = document.getElementById('playerImg');
+const playerWrap = document.getElementById('playerWrap');
+const suitImg = document.getElementById('suitImg');
+const suitSampler = document.getElementById('suitSampler');
+const playerSampler = document.getElementById('playerSampler');
+const sparksCanvas = document.getElementById('sparks');
+const reactor = document.getElementById('reactor');
+const flash = document.getElementById('flash');
 
-// size canvases
-function resize(){
-  const r = panel.getBoundingClientRect();
-  [nanoCanvas,bgCanvas].forEach(c=>{c.width = r.width; c.height = r.height});
+let cubes = [];
+let assembling = false;
+let cubeCount = 0;
+let sparkCtx;
+
+// ensure canvas size matches stage
+function resize() {
+  sparksCanvas.width = stage.clientWidth;
+  sparksCanvas.height = stage.clientHeight;
 }
-new ResizeObserver(resize).observe(panel); resize();
+window.addEventListener('resize', resize);
+resize();
 
-// ---------- background animated gradient (for cinematic color-change) ----------
-const bgCtx = bgCanvas.getContext('2d');
-let bgTick = 0;
-function drawBackground(){
-  const w = bgCanvas.width, h = bgCanvas.height; bgCtx.clearRect(0,0,w,h);
-  // layered radial gradients that animate
-  const cx = w*0.5 + Math.sin(bgTick*0.012)*w*0.08;
-  const cy = h*0.45 + Math.cos(bgTick*0.01)*h*0.06;
-  const g = bgCtx.createRadialGradient(cx,cy,Math.max(40,w*0.02),cx,cy,Math.max(w,h));
-  // dynamic colors during transform flag
-  const t = panel.classList.contains('transforming') ? Math.min(1, (Date.now()-panel._t0)/1200) : 0;
-  const r = Math.floor(80 + 120*t), gcol = Math.floor(20 + 160*t), bcol = Math.floor(20 + 200*t);
-  g.addColorStop(0, `rgba(${r},${gcol},${bcol},${0.85})`);
-  g.addColorStop(0.4, `rgba(${r*0.06|0},${gcol*0.06|0},${bcol*0.06|0},${0.35})`);
-  g.addColorStop(1, 'rgba(0,0,0,1)');
-  bgCtx.fillStyle = g; bgCtx.fillRect(0,0,w,h);
-  bgTick++;
-}
+/* Utilities */
+function rnd(min, max){return Math.random()*(max-min)+min;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
 
-// ---------- nano-particles (tiny robots) assembly canvas ----------
-const nCtx = nanoCanvas.getContext('2d');
-let nanoParticles = [];
-function Nano(x,y, vx, vy, size, life, hue){ this.x=x;this.y=y;this.vx=vx;this.vy=vy;this.size=size;this.life=life;this.hue=hue }
-function spawnNano(x,y,count){ for(let i=0;i<count;i++){ const a = Math.random()*Math.PI*2; const s = Math.random()*1.6+0.6; const sp = Math.random()*6+1; nanoParticles.push(new Nano(x + (Math.random()-0.5)*20, y + (Math.random()-0.5)*20, Math.cos(a)*sp, Math.sin(a)*sp, s, 80+Math.random()*60, 200+Math.random()*80)); } }
-
-function drawNano(){ const w=nanoCanvas.width, h=nanoCanvas.height; nCtx.clearRect(0,0,w,h); nCtx.globalCompositeOperation='lighter';
-  for(let i=nanoParticles.length-1;i>=0;i--){ const p = nanoParticles[i]; p.x += p.vx*0.14; p.y += p.vy*0.14; p.vx *= 0.98; p.vy *= 0.98; p.life--; const alpha = Math.max(p.life/140,0);
-    nCtx.beginPath(); nCtx.fillStyle = `hsla(${p.hue},90%,60%,${alpha})`; nCtx.arc(p.x,p.y,p.size,0,Math.PI*2); nCtx.fill();
-    // tiny metallic glints
-    nCtx.fillStyle = `rgba(255,255,255,${alpha*0.9})`; nCtx.fillRect(p.x-0.7,p.y-0.7,1.4,1.4);
-    if(p.life<=0) nanoParticles.splice(i,1);
+/* load suit image, sample pixels, create cube data structure */
+function createCubesFromSuit(cb){
+  // ensure suit image loaded
+  if(!suitImg.complete){
+    suitImg.onload = ()=> createCubesFromSuit(cb);
+    suitImg.onerror = ()=> {
+      status.innerText = "Couldn't load ironman.png — make sure file exists next to HTML (same folder).";
+    };
+    return;
   }
+  // sample into canvas
+  const sW = suitImg.naturalWidth;
+  const sH = suitImg.naturalHeight;
+  const step = CONFIG.SAMPLE_STEP;
+  suitSampler.width = sW; suitSampler.height = sH;
+  const sCtx = suitSampler.getContext('2d');
+  sCtx.clearRect(0,0,sW,sH);
+  sCtx.drawImage(suitImg,0,0,sW,sH);
+  const imgData = sCtx.getImageData(0,0,sW,sH).data;
+
+  const positions = [];
+  for(let y=0;y<sH;y+=step){
+    for(let x=0;x<sW;x+=step){
+      const idx = (y*sW + x)*4;
+      const a = imgData[idx+3];
+      if(a > 30){ // visible pixel
+        const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
+        positions.push({x, y, color:`rgb(${r},${g},${b})`});
+      }
+    }
+  }
+  // cap positions
+  if(positions.length > CONFIG.MAX_CUBES){
+    // sample uniformly to cap
+    const stride = Math.ceil(positions.length / CONFIG.MAX_CUBES);
+    const filtered = [];
+    for(let i=0;i<positions.length;i+=stride) filtered.push(positions[i]);
+    positions.length=0; positions.push(...filtered);
+  }
+  cb(positions);
 }
 
-// ---------- shards DOM assembly (for visible plating pieces) ----------
-function makeShards(count){ shardsRoot.innerHTML=''; const R = panel.getBoundingClientRect(); for(let i=0;i<count;i++){ const d=document.createElement('div'); d.className='shard'; const left = 40 + Math.random()*28; const top = 20 + Math.random()*48; d.style.left = left + '%'; d.style.top = top + '%'; d.style.width = (8 + Math.random()*14) + 'px'; d.style.height = (18 + Math.random()*36) + 'px'; d.style.transform = `translate(-50%,-50%) rotate(${Math.random()*360}deg) scale(${0.6+Math.random()*0.8})`; d.dataset.tx = (Math.random()*12-6) + '%'; d.dataset.ty = (Math.random()*6-3) + '%'; shardsRoot.appendChild(d);} }
-makeShards(28);
+/* map suit pixel positions into stage coordinates relative to player's bounding box */
+function mapToPlayer(positions){
+  // sample player bounding box and center positions
+  const playerRect = playerImg.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
 
-function assembleShards(){ const shards = document.querySelectorAll('.shard'); shards.forEach((el,i)=>{
-  el.style.opacity = 0; el.style.transition = `transform ${700+Math.random()*700}ms cubic-bezier(.2,.9,.3,1), opacity ${200+Math.random()*500}ms ease`;
-  setTimeout(()=>{ el.style.opacity = 1; el.style.transform = `translate(-50%,-50%) translate(${el.dataset.tx}, ${el.dataset.ty}) rotate(${Math.random()*20-10}deg) scale(1)`; }, i*45);
-  setTimeout(()=>{ el.style.opacity = 0.02; el.style.transform = `translate(-50%,-50%) translate(0,0) rotate(0deg) scale(0.86)`; }, 1400 + i*18);
-}); }
+  // We'll map suit image coordinates to player's width/height region. Use suit image natural dims
+  const suitW = suitImg.naturalWidth, suitH = suitImg.naturalHeight;
+  const mapScaleX = playerRect.width / suitW;
+  const mapScaleY = playerRect.height / suitH;
+  const offsetX = playerRect.left - stageRect.left + playerRect.width*0.0; // you can tweak centering
+  const offsetY = playerRect.top - stageRect.top + playerRect.height*0.0;
 
-// ---------- audio (synthesized metallic / hum sounds) ----------
-let audioCtx;
-function playAudioSequence(){ try{ audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); const now = audioCtx.currentTime + 0.02;
-  // low hum
-  const hum = audioCtx.createOscillator(); const humG = audioCtx.createGain(); hum.type='sine'; hum.frequency.value = 60; humG.gain.value = 0.06; hum.connect(humG); humG.connect(audioCtx.destination); hum.start(now); humG.gain.exponentialRampToValueAtTime(0.0001, now + 2.5); hum.stop(now+2.6);
-  // metallic clicks
-  const clicks = [1200,900,700,1400,1600]; clicks.forEach((f,i)=>{ const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='square'; o.frequency.value = f; g.gain.value = 0.06; o.connect(g); g.connect(audioCtx.destination); o.start(now + 0.12 + i*0.06); g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12 + i*0.06 + 0.12); o.stop(now + 0.12 + i*0.06 + 0.14); });
-  // final bright sweep
-  const sweep = audioCtx.createOscillator(); const sg = audioCtx.createGain(); sweep.type='sawtooth'; sweep.frequency.setValueAtTime(300, now+0.9); sweep.frequency.exponentialRampToValueAtTime(1200, now+1.6); sg.gain.value = 0.08; sweep.connect(sg); sg.connect(audioCtx.destination); sweep.start(now+0.9); sg.gain.exponentialRampToValueAtTime(0.0001, now+2.2); sweep.stop(now+2.25);
- }catch(e){console.warn('audio blocked',e);} }
+  return positions.map(p=>{
+    const tx = Math.round(p.x * mapScaleX + offsetX);
+    const ty = Math.round(p.y * mapScaleY + offsetY);
+    return {tx, ty, color:p.color};
+  });
+}
 
-// ---------- main loop ----------
-let raf;
-function loop(){ drawBackground(); drawNano(); raf = requestAnimationFrame(loop); }
-loop();
+/* build DOM cubes elements at random start positions and store target positions */
+function buildCubes(mapped){
+  // cleanup old cubes
+  world.innerHTML = '';
+  cubes = [];
 
-// ---------- transformation choreography ----------
-transformBtn.addEventListener('click', ()=>{
-  if(panel.classList.contains('transforming')) return; panel.classList.add('transforming'); panel._t0 = Date.now();
-  // dim human, start nanobot rains
-  const rect = panel.getBoundingClientRect(); const cx = rect.width*0.5; const cy = rect.height*0.46;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const centerX = W/2, centerY = H/2;
+  mapped.forEach((m,i)=>{
+    const el = document.createElement('div');
+    el.className = 'cube';
+    el.style.width = CONFIG.CUBE_SIZE + 'px';
+    el.style.height = CONFIG.CUBE_SIZE + 'px';
+    el.style.background = m.color;
+    el.style.opacity = '0';
+    // random start in 3d space
+    const theta = rnd(0, Math.PI*2);
+    const phi = rnd(0, Math.PI);
+    const r = rnd(120, CONFIG.START_RADIUS);
+    const sx = centerX + r*Math.cos(theta)*Math.sin(phi);
+    const sy = centerY + r*Math.sin(theta)*Math.sin(phi);
+    const sz = rnd(-900, 900);
 
-  // spawn continuous nanos from edges into center
-  for(let r=0;r<10;r++) setTimeout(()=> spawnNano(Math.random()*rect.width, -10 + Math.random()*20, 10 + Math.floor(Math.random()*8)), r*60);
-  for(let r=0;r<8;r++) setTimeout(()=> spawnNano(rect.width + 10, Math.random()*rect.height, 8 + Math.floor(Math.random()*6)), r*80);
-  setTimeout(()=> spawnNano(cx, cy, 140), 650);
+    // initial transform
+    el.style.transform = `translate3d(${sx}px, ${sy}px, ${sz}px) scale(.8) rotateX(${rnd(-90,90)}deg) rotateY(${rnd(-90,90)}deg)`;
+    world.appendChild(el);
 
-  // shards assembly and small pulses
-  setTimeout(()=> assembleShards(), 420);
-  setTimeout(()=> assembleShards(), 740);
+    cubes.push({
+      el, sx, sy, sz,
+      tx: m.tx + (CONFIG.CUBE_SIZE/2), // center offset
+      ty: m.ty + (CONFIG.CUBE_SIZE/2),
+      tz: 0,
+      delay: (i / mapped.length) * CONFIG.ASSEMBLE_MS * CONFIG.STAGGER_FACTOR * Math.random()
+    });
+  });
+  cubeCount = cubes.length;
+  status.innerText = `Cubes ready: ${cubeCount}. Click TRANSFORM.`;
+}
 
-  // reveal suit in steps
-  setTimeout(()=>{ suitImg.style.opacity = 0.6; suitImg.style.transform = 'scale(.92)'; }, 900);
-  setTimeout(()=>{ suitImg.style.opacity = 1; suitImg.style.transform = 'scale(1)'; panel.classList.add('transformed'); }, 1350);
+/* animate cubes: lerp from start -> target using requestAnimationFrame */
+function animateAssemble(){
+  if(assembling) return;
+  assembling = true;
+  const startTime = performance.now();
+  // audio + visual start
+  playSynth();
+  reactor.style.transition = `opacity ${CONFIG.REACTOR_SCALE_MS}ms ease-out, transform ${CONFIG.REACTOR_SCALE_MS}ms cubic-bezier(.2,.9,.2,1)`;
+  reactor.style.opacity = 1;
+  reactor.style.transform = 'translate(-50%,-50%) scale(1.35)';
+  flash.style.transition = 'opacity 180ms ease-out';
+  flash.style.background = 'linear-gradient(180deg, rgba(180,230,255,0.12), rgba(120,220,255,0.05))';
+  flash.style.opacity = 0.08;
+  setTimeout(()=>flash.style.opacity = 0, 160);
 
-  // arc reactor bright
-  setTimeout(()=>{ arc.style.opacity = 1; arc.style.transform = 'scale(1.12)'; }, 1200);
+  // start sparks animation
+  startSparks();
 
-  // big nano burst and audio
-  setTimeout(()=>{ spawnNano(cx, cy, 220); playAudioSequence(); }, 1150);
+  // camera shake
+  playerWrap.classList.add('shake');
+  setTimeout(()=>playerWrap.classList.remove('shake'), CONFIG.CAMERA_SHAKE_MS);
 
-  // a few beam-like vertical flares from top
-  createBeams();
+  function step(now){
+    const tGlobal = now - startTime;
+    let allAtTarget = true;
+    for(const c of cubes){
+      const tLocal = clamp((tGlobal - c.delay)/CONFIG.ASSEMBLE_MS, 0, 1);
+      // smooth ease (easeOutCubic)
+      const ease = 1 - Math.pow(1 - tLocal, 3);
+      // Interpolate positions in 3D: we animate z from start to small negative so the shape is slightly 3d
+      const curX = c.sx + (c.tx - c.sx) * ease;
+      const curY = c.sy + (c.ty - c.sy) * ease;
+      const curZ = c.sz + (c.tz - c.sz) * ease;
+      const rot = (1 - ease) * 360;
+      c.el.style.transform = `translate3d(${curX}px, ${curY}px, ${curZ}px) rotateX(${rot}deg) rotateY(${rot*0.7}deg) scale(${0.8 + 0.2*ease})`;
+      c.el.style.opacity = `${0.14 + ease*0.86}`;
+      if(tLocal < 1) allAtTarget = false;
+    }
+    if(!allAtTarget) requestAnimationFrame(step);
+    else {
+      assembling = false;
+      // final micro effects
+      burstSparks(18);
+      flickerGlow();
+      status.innerText = "Transformation complete — look awesome!";
+      setTimeout(()=>{reactor.style.transform='translate(-50%,-50%) scale(1)';}, 300);
+    }
+  }
+  requestAnimationFrame(step);
+}
 
-  // end transforming flag after full show
-  setTimeout(()=>{ panel.classList.remove('transforming'); }, 3600);
+/* disperse cubes (reset) */
+function disperse(){
+  // scatter back to random positions and fade out, then remove
+  if(cubes.length === 0) return;
+  const now = performance.now();
+  for(const c of cubes){
+    const nx = rnd(-200, stage.clientWidth + 200);
+    const ny = rnd(-200, stage.clientHeight + 200);
+    const nz = rnd(-1200, 1200);
+    c.el.style.transition = 'transform 900ms cubic-bezier(.2,.9,.2,1), opacity 700ms ease';
+    c.el.style.transform = `translate3d(${nx}px, ${ny}px, ${nz}px) rotateX(${rnd(-180,180)}deg) rotateY(${rnd(-180,180)}deg) scale(.5)`;
+    c.el.style.opacity = 0;
+  }
+  // audio cue
+  stopSynth();
+  reactor.style.opacity = 0;
+  status.innerText = "Reset — ready.";
+  setTimeout(()=> world.innerHTML = '', 900);
+  cubes = [];
+}
+
+/* Sparks system using 2d canvas */
+function startSparks(){
+  if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
+  const W = sparksCanvas.width, H = sparksCanvas.height;
+  const sparks = [];
+  for(let i=0;i<CONFIG.SPARK_COUNT;i++){
+    sparks.push({
+      x: rnd(W*0.2, W*0.8),
+      y: rnd(H*0.2, H*0.9),
+      vx: rnd(-2.4,2.4),
+      vy: rnd(-3.8,-0.6),
+      life: rnd(280, 1100),
+      age: 0,
+      size: rnd(1,3),
+      alpha: rnd(0.2,0.9)
+    });
+  }
+  let last = performance.now();
+  function tick(now){
+    const dt = now - last; last = now;
+    sparkCtx.clearRect(0,0,W,H);
+    for(let s of sparks){
+      s.age += dt;
+      if(s.age > s.life){
+        // respawn small burst near reactor area
+        s.x = stage.clientWidth/2 + rnd(-80,80);
+        s.y = stage.clientHeight/2 + rnd(-40,40);
+        s.vx = rnd(-1.8,1.8); s.vy = rnd(-4.2,-0.6);
+        s.age = 0; s.life = rnd(220,900);
+        s.size = rnd(1,3); s.alpha = rnd(0.2,0.9);
+      }
+      s.x += s.vx * dt/16; s.y += s.vy * dt/16; s.vy += 0.04 * dt/16;
+      sparkCtx.globalAlpha = clamp((1 - s.age/s.life) * s.alpha, 0, 1);
+      sparkCtx.beginPath();
+      sparkCtx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+      sparkCtx.fillStyle = 'rgba(180,220,255,1)';
+      sparkCtx.fill();
+    }
+    // fade canvas over time
+    if(assembling || cubes.length>0) requestAnimationFrame(tick);
+    else sparkCtx.clearRect(0,0,W,H);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* small burst */
+function burstSparks(n){
+  if(!sparkCtx) sparkCtx = sparksCanvas.getContext('2d');
+  const W = sparksCanvas.width, H = sparksCanvas.height;
+  const centerX = stage.clientWidth/2, centerY = stage.clientHeight/2;
+  const burst = [];
+  for(let i=0;i<n;i++){
+    burst.push({
+      x:centerX, y:centerY,
+      vx: rnd(-8,8), vy: rnd(-10,2),
+      life: rnd(300,900), age:0, size:rnd(1.2,3), alpha:1
+    });
+  }
+  let last = performance.now();
+  function tick(now){
+    const dt = now - last; last = now;
+    sparkCtx.clearRect(0,0,W,H);
+    // draw some existing continuous sparks as well (skip for simplicity)
+    for(let b of burst){
+      b.age += dt;
+      if(b.age > b.life) continue;
+      b.x += b.vx * dt/16; b.y += b.vy * dt/16; b.vy += 0.12*dt/16;
+      sparkCtx.globalAlpha = clamp((1 - b.age / b.life) * b.alpha, 0, 1);
+      sparkCtx.beginPath();
+      sparkCtx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+      sparkCtx.fillStyle = 'rgba(200,255,255,1)';
+      sparkCtx.fill();
+    }
+    if(burst.some(b=>b.age < b.life)) requestAnimationFrame(tick);
+    else setTimeout(()=>sparkCtx.clearRect(0,0,W,H), 120);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* small flicker */
+function flickerGlow(){
+  reactor.style.transition = 'opacity 120ms ease';
+  reactor.style.opacity = 0.8;
+  setTimeout(()=>reactor.style.opacity = 1, 120);
+  setTimeout(()=>reactor.style.opacity = 0.92, 260);
+}
+
+/* Lightweight WebAudio synth for metallic sweep */
+let audioCtx, osc1, osc2, gainNode;
+function playSynth(){
+  if(window.audioLocked) return;
+  try{
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gainNode = audioCtx.createGain(); gainNode.gain.value = 0.0001;
+    osc1 = audioCtx.createOscillator(); osc2 = audioCtx.createOscillator();
+    osc1.type = 'sawtooth'; osc2.type='triangle';
+    osc1.frequency.value = 180; osc2.frequency.value = 260;
+    const detuneLFO = audioCtx.createOscillator(); detuneLFO.frequency.value = 1.2;
+    const detuneGain = audioCtx.createGain(); detuneGain.gain.value = 20;
+    detuneLFO.connect(detuneGain); detuneGain.connect(osc2.frequency);
+    osc1.connect(gainNode); osc2.connect(gainNode); gainNode.connect(audioCtx.destination);
+    osc1.start(); osc2.start(); detuneLFO.start();
+    // fade in
+    gainNode.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 0.06);
+    // ramp frequencies a bit
+    osc1.frequency.exponentialRampToValueAtTime(720, audioCtx.currentTime + 0.9);
+    osc2.frequency.exponentialRampToValueAtTime(1160, audioCtx.currentTime + 0.9);
+    // stop after some time
+    setTimeout(()=> {
+      if(gainNode) gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+      setTimeout(()=>stopSynth(), 1000);
+    }, 1400);
+  }catch(e){ window.audioLocked=true; /* some mobile browsers need user gesture */ }
+}
+function stopSynth(){
+  try{
+    if(osc1) { osc1.stop(); osc1.disconnect(); osc1=null; }
+    if(osc2) { osc2.stop(); osc2.disconnect(); osc2=null; }
+    if(gainNode) { gainNode.disconnect(); gainNode=null; }
+    if(audioCtx){ audioCtx.close(); audioCtx=null; }
+  }catch(e){}
+}
+
+/* main flow */
+transformBtn.addEventListener('click', async ()=>{
+  status.innerText = "Preparing ...";
+  // ensure player image loaded
+  if(!playerImg.complete){
+    playerImg.onload = ()=>transformBtn.click();
+    return;
+  }
+  // create cubes from suit
+  createCubesFromSuit((positions)=>{
+    // map to player region
+    const mapped = mapToPlayer(positions);
+    buildCubes(mapped);
+    // slight delay then animate assemble
+    setTimeout(()=>animateAssemble(), 250);
+  });
 });
 
-resetBtn.addEventListener('click', ()=>{
-  cancelAnimationFrame(raf); nanoParticles=[]; panel.classList.remove('transformed','transforming'); suitImg.style.opacity=0; suitImg.style.transform='scale(.85)'; arc.style.opacity=0; shardsRoot.innerHTML=''; makeShards(28); loop();
-});
+resetBtn.addEventListener('click', ()=>disperse());
 
-// ---------- beams (DOM) ----------
-function createBeams(){ const count = 6; for(let i=0;i<count;i++){ const b = document.createElement('div'); b.className='beam'; b.style.width = `${2 + Math.random()*3}px`; b.style.left = `${45 + i*(6 + Math.random()*2)}%`; b.style.top = `${-20 - Math.random()*30}px`; b.style.opacity = 0; b.style.boxShadow = `0 0 ${30+Math.random()*80}px ${10+Math.random()*30}px rgba(100,200,255,0.12)`; panel.appendChild(b);
-    // animate beam
-    setTimeout(()=>{ b.style.transition = 'opacity .25s, top .9s cubic-bezier(.2,.9,.3,1)'; b.style.opacity = .85; b.style.top = `${-2 + Math.random()*8}%`; }, 100 + i*80);
-    setTimeout(()=>{ b.style.transition = 'opacity .6s linear'; b.style.opacity = 0; b.remove(); }, 1400 + i*60);
+/* Preflight: check if images exist */
+function preflightCheck(){
+  // If player image missing, change status
+  playerImg.onerror = ()=>{ status.innerText = "player.png not found or failed to load. Upload player.png next to this file.";};
+  if(!suitImg.complete){
+    suitImg.onload = ()=>{ status.innerText = "ironman.png loaded. Click Transform."; };
+    suitImg.onerror = ()=>{ status.innerText = "ironman.png not found — place your suit image named ironman.png in same folder."; };
+  }else{
+    status.innerText = "Ready — click Transform.";
   }
 }
-
-// attempt to auto-fit suit size to human image when both loaded
-function fitSuit(){ if(!humanImg.complete || !suitImg.complete) return setTimeout(fitSuit,200);
-  const hr = humanImg.getBoundingClientRect(); const sr = suitImg.getBoundingClientRect();
-  // scale suit width to human width
-  suitImg.style.width = hr.width + 'px';
-}
-humanImg.addEventListener('load', fitSuit); suitImg.addEventListener('load', fitSuit); setTimeout(fitSuit,500);
+preflightCheck();
 
 </script>
 </body>
